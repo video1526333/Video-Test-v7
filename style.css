@@ -1301,3 +1301,32 @@ button:hover,
 .video-card p {
   color: var(--bw-text) !important;
 }
+
+/* Video Modal Episode Controls & Titles BW Overrides */
+#playingTitle,
+.video-title-container h3 {
+  color: var(--bw-text) !important;
+}
+#episodeControls {
+  color: var(--bw-text) !important;
+}
+#prevEpisode,
+#nextEpisode,
+#modalWatchListBtn,
+#resumeEpisodeBtn {
+  background: var(--bw-surface-light) !important;
+  color: var(--bw-text) !important;
+  border: 1px solid var(--bw-border) !important;
+}
+#prevEpisode:disabled,
+#nextEpisode:disabled {
+  background: var(--bw-border) !important;
+  color: var(--bw-text-muted) !important;
+  cursor: default !important;
+}
+#prevEpisode:hover:enabled,
+#nextEpisode:hover:enabled,
+#modalWatchListBtn:hover:not(:disabled),
+#resumeEpisodeBtn:hover:not(:disabled) {
+  background: var(--bw-surface) !important;
+}
