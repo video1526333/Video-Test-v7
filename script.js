@@ -1075,8 +1075,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 // Update watch list button text
                 watchListBtn.textContent = watchList.includes(currentVideoId) ? '从观看列表移除' : '添加到观看列表';
-                // Play first episode
-                playEpisode(0);
+                // Play default episode: resume at last watched if available
+                const watchedMap = getWatchedEpisodes();
+                const epNames = watchedMap[videoId] || [];
+                const lastEp = epNames[epNames.length - 1];
+                let startIdx = 0;
+                if (lastEp) {
+                    const found = currentEpisodes.findIndex(ep => ep.name === lastEp);
+                    if (found >= 0) startIdx = found;
+                }
+                playEpisode(startIdx);
                 videoPlayerModal.classList.add('open');
                 updateBodyScrollLock();
             } catch (err) {
