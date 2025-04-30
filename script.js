@@ -1365,13 +1365,32 @@ document.addEventListener('DOMContentLoaded', () => {
     // Function to request fullscreen with device-specific handling
     function requestFullscreen(element) {
         try {
+            // Don't attempt if we've already marked to prevent auto-fullscreen
+            if (window.preventAutoFullscreen) {
+                console.log('Auto fullscreen prevented by user preference');
+                return false;
+            }
+            
+            // Don't attempt if we're already in fullscreen
+            const isAlreadyFullscreen = document.fullscreenElement || 
+                           document.webkitFullscreenElement || 
+                           document.mozFullScreenElement || 
+                           document.msFullscreenElement;
+                           
+            if (isAlreadyFullscreen) {
+                console.log('Already in fullscreen mode, skipping request');
+                return false;
+            }
+            
+            // Store timestamp of last fullscreen request to prevent rapid repeated calls
+            const now = Date.now();
+            if (window.lastFullscreenRequest && (now - window.lastFullscreenRequest) < 1000) {
+                console.log('Skipping fullscreen request - too soon after previous request');
+                return false;
+            }
+            window.lastFullscreenRequest = now;
+            
             if (element) {
-                // Check if we've marked the page to prevent auto-fullscreen
-                if (window.preventAutoFullscreen) {
-                    console.log('Auto fullscreen prevented by user preference');
-                    return false;
-                }
-                
                 if (isIOS()) {
                     // On iOS, we need to handle this differently
                     // Try the video element directly on iOS
@@ -1385,7 +1404,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 // Standard approach for other browsers
                 if (element.requestFullscreen) {
-                    element.requestFullscreen();
+                    element.requestFullscreen().catch(e => {
+                        console.warn('Fullscreen request was rejected:', e);
+                        window.preventAutoFullscreen = true; // Prevent further attempts
+                    });
                 } else if (element.webkitRequestFullscreen) { // Safari
                     element.webkitRequestFullscreen();
                 } else if (element.mozRequestFullscreen) { // Firefox
@@ -1398,6 +1420,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         } catch (e) {
             console.warn('Failed to enter fullscreen mode:', e);
+            window.preventAutoFullscreen = true; // Prevent further attempts on error
         }
         return false;
     }
