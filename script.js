@@ -1017,6 +1017,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const card = event.target.closest('.video-card');
         if (!card) return;
         const videoId = card.dataset.id;
+        currentVideoId = videoId;
         (async () => {
             try {
                 const data = await fetchData({ ac: 'detail', ids: videoId });
@@ -1031,7 +1032,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     showToast('No episodes available.', 'info');
                     return;
                 }
-                // Play first
+                // Update watch list button text
+                watchListBtn.textContent = watchList.includes(currentVideoId) ? 'Remove from Watch List' : 'Add to Watch List';
+                // Play first episode
                 playEpisode(0);
                 videoPlayerModal.classList.add('open');
                 updateBodyScrollLock();
@@ -1404,9 +1407,44 @@ document.addEventListener('DOMContentLoaded', () => {
     const videoContent = videoPlayerModal.querySelector('.video-modal-content');
     videoContent.appendChild(episodeControls);
     videoContent.appendChild(ctrlContainer);
-    // Handlers for prev/next
-    prevBtn.addEventListener('click', () => playEpisode(currentEpisodeIndex - 1));
-    nextBtn.addEventListener('click', () => playEpisode(currentEpisodeIndex + 1));
+
+    // Create Watch List Toggle button once (only here)
+    const watchListBtn = document.createElement('button');
+    watchListBtn.id = 'modalWatchListBtn';
+    watchListBtn.textContent = 'Add to Watch List';
+    watchListBtn.style.cssText = 'font-size:1.2rem; padding:0.5rem 1rem; margin:0.5rem auto; display:block;';
+    videoContent.appendChild(watchListBtn);
+    watchListBtn.addEventListener('click', () => {
+        if (!currentVideoId) return;
+        const idx = watchList.indexOf(currentVideoId);
+        if (idx === -1) {
+            watchList.push(currentVideoId);
+            watchListBtn.textContent = 'Remove from Watch List';
+            showToast('Added to watch list', 'info');
+        } else {
+            watchList.splice(idx, 1);
+            watchListBtn.textContent = 'Add to Watch List';
+            showToast('Removed from watch list', 'info');
+        }
+        localStorage.setItem('watchList', JSON.stringify(watchList));
+    });
+
+    // Create Resume button once
+    const resumeBtn = document.createElement('button');
+    resumeBtn.id = 'resumeEpisodeBtn';
+    resumeBtn.style.cssText = 'font-size:1.2rem; padding:0.5rem 1rem; margin:0.5rem auto; display:none;';
+    videoContent.appendChild(resumeBtn);
+    resumeBtn.addEventListener('click', () => {
+        if (!currentVideoId || !videoPlayer) return;
+        const epName = currentEpisodes[currentEpisodeIndex].name;
+        const resumeTime = getPlaybackPosition(currentVideoId, epName);
+        if (resumeTime > 1) {
+            // Seek and play
+            videoPlayer.currentTime = resumeTime;
+            videoPlayer.play();
+            showToast(`Resumed at ${Math.floor(resumeTime/60)}:${String(Math.floor(resumeTime%60)).padStart(2,'0')}`, 'info');
+        }
+    });
 
     /**
      * Play an episode by index and update controls
@@ -1419,7 +1457,20 @@ document.addEventListener('DOMContentLoaded', () => {
         episodeControls.textContent = `Episode ${index + 1} of ${currentEpisodes.length}`;
         prevBtn.disabled = (index === 0);
         nextBtn.disabled = (index === currentEpisodes.length - 1);
-        playM3u8Video(ep.url);
+        
+        // Check resume time for this episode
+        const resumeTime = getPlaybackPosition(currentVideoId, ep.name);
+        if (resumeTime > 1) {
+            resumeBtn.style.display = 'block';
+            resumeBtn.textContent = `Resume at ${Math.floor(resumeTime/60)}:${String(Math.floor(resumeTime%60)).padStart(2,'0')}`;
+        } else {
+            resumeBtn.style.display = 'none';
+        }
+        
+        // Play video with resume logic
+        const dummyLink = document.createElement('a');
+        dummyLink.dataset.name = ep.name;
+        playM3u8Video(ep.url, dummyLink);
     }
 
 }); 
