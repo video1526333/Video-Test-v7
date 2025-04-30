@@ -1441,6 +1441,17 @@ document.addEventListener('DOMContentLoaded', () => {
     ctrlContainer.style.cssText = 'display:flex; justify-content:center; gap:1rem;';
     ctrlContainer.appendChild(prevBtn);
     ctrlContainer.appendChild(nextBtn);
+    // Add navigation handlers for episode controls
+    prevBtn.addEventListener('click', () => {
+        if (currentEpisodeIndex > 0) {
+            playEpisode(currentEpisodeIndex - 1);
+        }
+    });
+    nextBtn.addEventListener('click', () => {
+        if (currentEpisodeIndex < currentEpisodes.length - 1) {
+            playEpisode(currentEpisodeIndex + 1);
+        }
+    });
     // Insert controls into video player modal
     const videoContent = videoPlayerModal.querySelector('.video-modal-content');
     videoContent.appendChild(episodeControls);
