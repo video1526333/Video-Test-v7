@@ -2151,4 +2151,33 @@ document.addEventListener('DOMContentLoaded', () => {
     // Add this to window object for console access in emergencies
     window.fixScroll = ensureScrollable;
 
+    // Add event listener to prevent background scrolling when modal is open
+    document.addEventListener('DOMContentLoaded', function() {
+        const videoPlayerModal = document.getElementById('videoPlayerModal');
+        
+        if (videoPlayerModal) {
+            // When wheel event happens on the modal
+            videoPlayerModal.addEventListener('wheel', function(e) {
+                // Only if modal is open
+                if (videoPlayerModal.classList.contains('open')) {
+                    // Get the modal content
+                    const modalContent = videoPlayerModal.querySelector('.video-modal-content');
+                    const rect = modalContent.getBoundingClientRect();
+                    const isAtTop = modalContent.scrollTop === 0;
+                    const isAtBottom = modalContent.scrollTop + modalContent.clientHeight === modalContent.scrollHeight;
+                    
+                    // Allow scrolling only within the modal content
+                    if ((isAtTop && e.deltaY < 0) || (isAtBottom && e.deltaY > 0)) {
+                        e.preventDefault();
+                    }
+                }
+            });
+            
+            // Prevent touch scroll propagation from modal to background
+            videoPlayerModal.querySelector('.video-modal-content').addEventListener('touchmove', function(e) {
+                e.stopPropagation();
+            }, { passive: false });
+        }
+    });
+
 }); 
