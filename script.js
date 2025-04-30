@@ -1537,6 +1537,11 @@ document.addEventListener('DOMContentLoaded', () => {
     selectBtn.style.cssText = 'font-size:1.2rem; padding:0.5rem 1rem; margin:0.5rem auto; display:block;';
     videoContent.appendChild(selectBtn);
     selectBtn.addEventListener('click', () => {
+        // Ensure episodes have been loaded
+        if (!currentEpisodes || currentEpisodes.length === 0) {
+          showToast('当前没有可选剧集', 'info');
+          return;
+        }
         // Populate selectEpisode list
         selectList.innerHTML = '';
         currentEpisodes.forEach((ep, idx) => {
