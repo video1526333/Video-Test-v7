@@ -567,7 +567,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const playBtn = document.createElement('button');
                 playBtn.innerHTML = '▶️';
                 playBtn.className = 'play-btn';
-                playBtn.setAttribute('aria-label', 'Play');
+                playBtn.setAttribute('aria-label', '播放');
                 playBtn.tabIndex = 0;
                 playBtn.addEventListener('click', (e) => {
                     e.stopPropagation();
@@ -577,7 +577,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const shareBtn = document.createElement('button');
                 shareBtn.innerHTML = '🔗';
                 shareBtn.className = 'share-btn';
-                shareBtn.setAttribute('aria-label', 'Share');
+                shareBtn.setAttribute('aria-label', '分享');
                 shareBtn.tabIndex = 0;
                 shareBtn.addEventListener('click', (e) => {
                     e.stopPropagation();
@@ -588,21 +588,21 @@ document.addEventListener('DOMContentLoaded', () => {
                 const wlBtn = document.createElement('button');
                 wlBtn.innerHTML = watchList.includes(video.vod_id) ? '★' : '☆';
                 wlBtn.className = 'watchlist-btn';
-                wlBtn.setAttribute('aria-label', watchList.includes(video.vod_id) ? 'Remove from Watch List' : 'Add to Watch List');
+                wlBtn.setAttribute('aria-label', watchList.includes(video.vod_id) ? '从观看列表移除' : '添加到观看列表');
                 wlBtn.tabIndex = 0;
                 wlBtn.addEventListener('click', (e) => {
                     e.stopPropagation();
                     const idx = watchList.indexOf(video.vod_id);
                     if (idx === -1) {
                         watchList.push(video.vod_id);
-                        showToast('Added to watch list', 'info');
+                        showToast('已添加到观看列表', 'info');
                         wlBtn.innerHTML = '★';
-                        wlBtn.setAttribute('aria-label', 'Remove from Watch List');
+                        wlBtn.setAttribute('aria-label', '从观看列表移除');
                     } else {
                         watchList.splice(idx, 1);
-                        showToast('Removed from watch list', 'info');
+                        showToast('已从观看列表移除', 'info');
                         wlBtn.innerHTML = '☆';
-                        wlBtn.setAttribute('aria-label', 'Add to Watch List');
+                        wlBtn.setAttribute('aria-label', '添加到观看列表');
                     }
                     localStorage.setItem('watchList', JSON.stringify(watchList));
                 });
@@ -662,7 +662,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Store the current video ID for sharing
         currentVideoId = videoId;
         // Update Watch List button text based on storage
-        addToWatchListButton.textContent = watchList.includes(currentVideoId) ? 'Remove from Watch List' : 'Add to Watch List';
+        addToWatchListButton.textContent = watchList.includes(currentVideoId) ? '从观看列表移除' : '添加到观看列表';
 
         modalTitle.textContent = video.vod_name || 'No Title';
         // Use more robust image URL handling
@@ -703,7 +703,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         const isM3u8 = url.includes('.m3u8');
                         const link = document.createElement('a');
                         link.href = 'javascript:void(0)'; // Use JavaScript instead of direct link
-                        link.textContent = name || 'Play';
+                        link.textContent = name || '播放';
                         link.dataset.url = url;
                         link.dataset.name = name || 'Episode';
                         // --- Add watched class if already watched ---
@@ -1068,7 +1068,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     return;
                 }
                 // Update watch list button text
-                watchListBtn.textContent = watchList.includes(currentVideoId) ? 'Remove from Watch List' : 'Add to Watch List';
+                watchListBtn.textContent = watchList.includes(currentVideoId) ? '从观看列表移除' : '添加到观看列表';
                 // Play first episode
                 playEpisode(0);
                 videoPlayerModal.classList.add('open');
@@ -1377,13 +1377,13 @@ document.addEventListener('DOMContentLoaded', () => {
         const idx = watchList.indexOf(currentVideoId);
         if (idx === -1) {
             watchList.push(currentVideoId);
-            showToast('Added to watch list', 'info');
+            showToast('已添加到观看列表', 'info');
         } else {
             watchList.splice(idx, 1);
-            showToast('Removed from watch list', 'info');
+            showToast('已从观看列表移除', 'info');
         }
         localStorage.setItem('watchList', JSON.stringify(watchList));
-        addToWatchListButton.textContent = watchList.includes(currentVideoId) ? 'Remove from Watch List' : 'Add to Watch List';
+        addToWatchListButton.textContent = watchList.includes(currentVideoId) ? '从观看列表移除' : '添加到观看列表';
     }
     // Event listeners for Watch List buttons
     addToWatchListButton.addEventListener('click', toggleWatchList);
@@ -1444,10 +1444,10 @@ document.addEventListener('DOMContentLoaded', () => {
     episodeControls.id = 'episodeControls';
     episodeControls.style.cssText = 'font-size:1.2rem; margin:0.5rem; text-align:center; color:#000';
     const prevBtn = document.createElement('button');
-    prevBtn.id = 'prevEpisode'; prevBtn.textContent = 'Previous'; prevBtn.disabled = true;
+    prevBtn.id = 'prevEpisode'; prevBtn.textContent = '上一集'; prevBtn.disabled = true;
     prevBtn.style.cssText = 'font-size:1.2rem; padding:0.5rem 1rem;';
     const nextBtn = document.createElement('button');
-    nextBtn.id = 'nextEpisode'; nextBtn.textContent = 'Next'; nextBtn.disabled = true;
+    nextBtn.id = 'nextEpisode'; nextBtn.textContent = '下一集'; nextBtn.disabled = true;
     nextBtn.style.cssText = 'font-size:1.2rem; padding:0.5rem 1rem;';
     const ctrlContainer = document.createElement('div');
     ctrlContainer.style.cssText = 'display:flex; justify-content:center; gap:1rem;';
@@ -1472,7 +1472,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Create Watch List Toggle button once (only here)
     const watchListBtn = document.createElement('button');
     watchListBtn.id = 'modalWatchListBtn';
-    watchListBtn.textContent = 'Add to Watch List';
+    watchListBtn.textContent = '添加到观看列表';
     watchListBtn.style.cssText = 'font-size:1.2rem; padding:0.5rem 1rem; margin:0.5rem auto; display:block;';
     videoContent.appendChild(watchListBtn);
     watchListBtn.addEventListener('click', () => {
@@ -1480,12 +1480,12 @@ document.addEventListener('DOMContentLoaded', () => {
         const idx = watchList.indexOf(currentVideoId);
         if (idx === -1) {
             watchList.push(currentVideoId);
-            watchListBtn.textContent = 'Remove from Watch List';
-            showToast('Added to watch list', 'info');
+            watchListBtn.textContent = '从观看列表移除';
+            showToast('已添加到观看列表', 'info');
         } else {
             watchList.splice(idx, 1);
-            watchListBtn.textContent = 'Add to Watch List';
-            showToast('Removed from watch list', 'info');
+            watchListBtn.textContent = '添加到观看列表';
+            showToast('已从观看列表移除', 'info');
         }
         localStorage.setItem('watchList', JSON.stringify(watchList));
     });
@@ -1503,7 +1503,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // Seek and play
             videoPlayer.currentTime = resumeTime;
             videoPlayer.play();
-            showToast(`Resumed at ${Math.floor(resumeTime / 60)}:${String(Math.floor(resumeTime % 60)).padStart(2, '0')}`, 'info');
+            showToast(`从${Math.floor(resumeTime / 60)}:${String(Math.floor(resumeTime % 60)).padStart(2, '0')}继续播放`, 'info');
         }
     });
 
@@ -1514,7 +1514,7 @@ document.addEventListener('DOMContentLoaded', () => {
     selectModal.innerHTML = `
       <div class="modal-content select-episode-modal">
         <span class="close-button">&times;</span>
-        <h3>Select Episode</h3>
+        <h3>选择剧集</h3>
         <div id="selectEpisodeList" class="select-episode-list"></div>
       </div>
     `;
@@ -1527,7 +1527,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Create Select Episode button for direct episode selection
     const selectBtn = document.createElement('button');
     selectBtn.id = 'selectEpisodeBtn';
-    selectBtn.textContent = 'Select Episode';
+    selectBtn.textContent = '选择剧集';
     selectBtn.style.cssText = 'font-size:1.2rem; padding:0.5rem 1rem; margin:0.5rem auto; display:block;';
     videoContent.appendChild(selectBtn);
     selectBtn.addEventListener('click', () => {
@@ -1562,7 +1562,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const resumeTime = getPlaybackPosition(currentVideoId, ep.name);
         if (resumeTime > 1) {
             resumeBtn.style.display = 'block';
-            resumeBtn.textContent = `Resume at ${Math.floor(resumeTime / 60)}:${String(Math.floor(resumeTime % 60)).padStart(2, '0')}`;
+            const m = Math.floor(resumeTime / 60);
+            const s = String(Math.floor(resumeTime % 60)).padStart(2, '0');
+            resumeBtn.textContent = `从${m}:${s}继续播放`;
         } else {
             resumeBtn.style.display = 'none';
         }
