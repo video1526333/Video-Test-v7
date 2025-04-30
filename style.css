@@ -1105,6 +1105,7 @@ button {
 
 #searchInput {
   width: 300px !important;
+  height: 59px !important;
 }
 
 .settings-button,
