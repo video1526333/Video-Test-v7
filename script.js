@@ -862,7 +862,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Function to play m3u8 videos
-    function playM3u8Video(url, linkElement) {
+    function playM3u8Video(url, linkElement, retryCount = 0) {
+        const MAX_RETRIES = 3;
+        
         // Reset active statuses
         const allLinks = modalEpisodes.querySelectorAll('a');
         allLinks.forEach(link => link.classList.remove('active'));
@@ -896,15 +898,51 @@ document.addEventListener('DOMContentLoaded', () => {
         if (hlsPlayer) { hlsPlayer.destroy(); hlsPlayer = null; }
         videoPlayer.style.display = 'block';
 
-        // Simplified HLS playback
+        // Add error handling and retry logic
+        const handleError = (error) => {
+            console.error('Video loading error:', error);
+            if (retryCount < MAX_RETRIES) {
+                showToast(`Video loading failed. Retrying... (${retryCount + 1}/${MAX_RETRIES})`, 'error', 2000);
+                setTimeout(() => {
+                    playM3u8Video(url, linkElement, retryCount + 1);
+                }, 1500);
+            } else {
+                showToast(`Failed to load video after ${MAX_RETRIES} attempts. Please try again later.`, 'error');
+            }
+        };
+
+        // Simplified HLS playback with error handling
         if (Hls.isSupported()) {
-            hlsPlayer = new Hls();
+            hlsPlayer = new Hls({
+                maxLoadingRetry: 4,
+                manifestLoadingTimeOut: 10000,
+                manifestLoadingMaxRetry: 4,
+                manifestLoadingRetryDelay: 500,
+                levelLoadingTimeOut: 10000,
+                levelLoadingMaxRetry: 4,
+                levelLoadingRetryDelay: 500
+            });
+            
+            hlsPlayer.on(Hls.Events.ERROR, function(event, data) {
+                if (data.fatal) {
+                    console.error('Fatal HLS error:', data.type, data.details);
+                    handleError(data);
+                }
+            });
+
             hlsPlayer.loadSource(url);
             hlsPlayer.attachMedia(videoPlayer);
         } else {
             // Native HLS (Safari)
             videoPlayer.src = url;
+            
+            // Add error listener for Safari
+            videoPlayer.addEventListener('error', function(e) {
+                console.error('Video error event:', videoPlayer.error);
+                handleError(videoPlayer.error);
+            }, { once: true });
         }
+        
         // Restore playback position if available
         let resumeTime = 0;
         if (currentVideoId && linkElement && linkElement.dataset.name) {
@@ -984,7 +1022,6 @@ document.addEventListener('DOMContentLoaded', () => {
             videoPlayerModal.addEventListener('close', saveOnClose);
             videoPlayerModal.addEventListener('hide', saveOnClose);
         }
-
     }
 
     // --- Scroll Lock Helper ---
@@ -1254,45 +1291,30 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Watch History Functions ---
 
-    function addToWatchHistory(videoId, episodeName) {
-        console.log('[DEBUG] addToWatchHistory called with:', videoId, episodeName);
-        const history = getWatchHistory();
-        const timestamp = new Date().toISOString();
-        // Avoid duplicate consecutive entries
-        if (history.length > 0) {
-            const last = history[history.length - 1];
-            if (last.videoId === videoId && last.episodeName === episodeName) {
-                console.log('[DEBUG] Duplicate consecutive entry. Skipping.');
-                return;
-            }
-        }
-        history.push({ videoId, episodeName, timestamp });
-        // Limit history to 100 items
-        if (history.length > 100) history.shift();
-        localStorage.setItem('watchHistory', JSON.stringify(history));
-        console.log('[DEBUG] watchHistory after push:', history);
-    }
     async function renderWatchHistory() {
-        const MAX_HISTORY = 20;
-        const fullHistory = getWatchHistory().slice().reverse(); // Show latest first
-        const history = fullHistory.slice(0, MAX_HISTORY);
+        const MAX_HISTORY = 50; // Limit display to most recent 50 entries
+        const history = getWatchHistory();
+        const fullHistory = [...history]; // Keep a copy of the full history
+        // Sort by most recent first
+        history.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+        // Limit to most recent entries for display
+        history.splice(MAX_HISTORY);
+        // Clear the list
         watchHistoryList.innerHTML = '';
-        if (history.length === 0) {
-            watchHistoryList.innerHTML = '<p>No watch history yet.</p>';
-            return;
-        }
-        // Fetch video details for only the latest MAX_HISTORY unique videoIds
-        const uniqueIds = [...new Set(history.map(item => item.videoId))];
-        let videoData = {};
-        if (uniqueIds.length > 0) {
-            const data = await fetchData({ ac: 'detail', ids: uniqueIds.join(',') });
-            console.log('[DEBUG] fetched video details for history:', data);
+        
+        // Fetch video details for all entries in one request if possible
+        const videoIds = [...new Set(history.map(item => item.videoId))].join(',');
+        const videoData = {};
+        
+        if (videoIds) {
+            const data = await fetchData({ ac: 'detail', ids: videoIds }, true);
             if (data && data.list) {
                 data.list.forEach(video => {
                     videoData[video.vod_id] = video;
                 });
             }
         }
+        
         history.forEach(item => {
             const video = videoData[item.videoId];
             console.log('[DEBUG] rendering history item:', item, 'video:', video);
@@ -1347,21 +1369,37 @@ document.addEventListener('DOMContentLoaded', () => {
             info.appendChild(dateSpan);
             div.appendChild(info);
             div.onclick = () => {
-                showVideoDetails(item.videoId);
                 watchHistoryModal.classList.remove('open');
                 if (typeof updateBodyScrollLock === 'function') updateBodyScrollLock();
+                
+                // Instead of just calling showVideoDetails, use a more robust approach to ensure video playback
+                (async () => {
+                    try {
+                        // First show the video details
+                        await showVideoDetails(item.videoId);
+                        
+                        // Then find episode matching the one in watch history
+                        if (currentEpisodes && currentEpisodes.length > 0) {
+                            // Find the matching episode
+                            const epIndex = currentEpisodes.findIndex(ep => ep.name === item.episodeName);
+                            
+                            if (epIndex >= 0) {
+                                // Found the episode, now play it
+                                playEpisode(epIndex);
+                            } else {
+                                // Fallback: play the first episode
+                                showToast(`Couldn't find episode "${item.episodeName}", playing first available episode`, 'info');
+                                playEpisode(0);
+                            }
+                        }
+                    } catch (error) {
+                        console.error('Error playing video from watch history:', error);
+                        showToast('Failed to play video. Please try again.', 'error');
+                    }
+                })();
             };
             watchHistoryList.appendChild(div);
         });
-        // Show a note if there are more entries
-        if (fullHistory.length > MAX_HISTORY) {
-            const moreDiv = document.createElement('div');
-            moreDiv.style.color = 'gray';
-            moreDiv.style.textAlign = 'center';
-            moreDiv.style.marginTop = '1em';
-            moreDiv.textContent = `Only the latest ${MAX_HISTORY} entries are shown.`;
-            watchHistoryList.appendChild(moreDiv);
-        }
     }
     function checkForSharedVideo() {
         const urlParams = new URLSearchParams(window.location.search);
