@@ -442,6 +442,7 @@ nav ul li.active {
 }
 
 /* Close button */
+/* Fixed close button at top right */
 .close-button {
   position: fixed;
   top: 0;
@@ -455,7 +456,9 @@ nav ul li.active {
   cursor: pointer;
   padding: 0;
   line-height: 50px;
+  /* vertical center */
   text-align: center;
+  /* horizontal center */
   z-index: 2000;
 }
 
@@ -482,7 +485,7 @@ nav ul li.active {
   min-width: 130px;
 }
 
-/* Video player modal styles - Updated to prevent background scroll */
+/* Video player modal styles */
 .video-modal-content {
   background: var(--surface);
   padding: 1rem;
@@ -494,26 +497,6 @@ nav ul li.active {
   flex-direction: column;
   gap: 1rem;
   margin: 0 auto;
-  max-height: 90vh; /* Limit height */
-  overflow-y: auto; /* Allow vertical scrolling */
-  overflow-x: hidden; /* Prevent horizontal scrolling */
-}
-
-/* Make modal a container with fixed position that stops events from propagating */
-#videoPlayerModal.modal.open {
-  display: flex !important;
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  overflow: hidden; /* Prevent background scrolling */
-}
-
-/* Ensure video modal content is scrollable */
-#videoPlayerModal .video-modal-content {
-  overscroll-behavior: contain; /* Prevent scroll chaining to parent */
-  -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
 }
 
 .video-title-container {
