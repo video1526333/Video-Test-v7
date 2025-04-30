@@ -699,177 +699,210 @@ document.addEventListener('DOMContentLoaded', () => {
         const cacheKey = `video_details_${videoId}`;
         let data;
         
-        // Check if we have this data in sessionStorage
-        const cachedData = sessionStorage.getItem(cacheKey);
-        if (cachedData) {
-            try {
-                data = JSON.parse(cachedData);
-                console.log('Using cached video details');
-            } catch (e) {
-                console.error('Error parsing cached data', e);
-                // If parsing fails, fetch fresh data
-                data = await fetchData({ ac: 'detail', ids: videoId });
-            }
-        } else {
-            // Fetch fresh data
-            data = await fetchData({ ac: 'detail', ids: videoId });
-            // Cache the response
-            if (data && data.list && data.list.length > 0) {
+        try {
+            // Check if we have this data in sessionStorage
+            const cachedData = sessionStorage.getItem(cacheKey);
+            if (cachedData) {
                 try {
-                    sessionStorage.setItem(cacheKey, JSON.stringify(data));
+                    data = JSON.parse(cachedData);
+                    console.log('Using cached video details');
                 } catch (e) {
-                    console.error('Error caching video details', e);
+                    console.error('Error parsing cached data', e);
+                    // If parsing fails, fetch fresh data
+                    data = await fetchData({ ac: 'detail', ids: videoId });
                 }
-            }
-        }
-        
-        if (!data || !data.list || data.list.length === 0) {
-            showToast('Failed to load video details.', 'error');
-            return;
-        }
-
-        const video = data.list[0]; // Assuming the first item is the one we want
-
-        // Store the current video ID for sharing
-        currentVideoId = videoId;
-        // Update Watch List button text based on storage
-        addToWatchListButton.textContent = watchList.includes(currentVideoId) ? '从观看列表移除' : '添加到观看列表';
-
-        // Update UI elements efficiently (batch DOM updates)
-        const updateUI = () => {
-            modalTitle.textContent = video.vod_name || 'No Title';
-            // Use more robust image URL handling
-            const validImageUrl = getValidImageUrl(video.vod_pic);
-            modalPoster.src = validImageUrl || 'data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22200%22%20height%3D%22300%22%20viewBox%3D%220%200%20200%20300%22%3E%3Crect%20fill%3D%22%23ddd%22%20width%3D%22200%22%20height%3D%22300%22%2F%3E%3Ctext%20fill%3D%22%23666%22%20font-family%3D%22sans-serif%22%20font-size%3D%2220%22%20x%3D%2250%25%22%20y%3D%2250%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%3ENo%20Image%3C%2Ftext%3E%3C%2Fsvg%3E';
-            modalYear.textContent = video.vod_year || 'N/A';
-            modalArea.textContent = video.vod_area || 'N/A';
-            modalLang.textContent = video.vod_lang || 'N/A';
-            modalDirector.textContent = video.vod_director || 'N/A';
-            modalActors.textContent = video.vod_actor || 'N/A';
-            modalRemarks.textContent = video.vod_remark || 'N/A';
-            // Use innerHTML for description in case it contains basic HTML
-            modalDescription.innerHTML = video.vod_content || 'No description available.';
-        };
-        
-        // Use requestAnimationFrame for smoother UI updates
-        requestAnimationFrame(updateUI);
-
-        // Handle image loading errors
-        modalPoster.onerror = () => {
-            modalPoster.src = 'data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22200%22%20height%3D%22300%22%20viewBox%3D%220%200%20200%20300%22%3E%3Crect%20fill%3D%22%23ddd%22%20width%3D%22200%22%20height%3D%22300%22%2F%3E%3Ctext%20fill%3D%22%23666%22%20font-family%3D%22sans-serif%22%20font-size%3D%2220%22%20x%3D%2250%25%22%20y%3D%2250%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%3ENo%20Image%3C%2Ftext%3E%3C%2Fsvg%3E';
-        }
-
-        // Reset the video player
-        if (videojsPlayer) {
-            videojsPlayer.dispose();
-            videojsPlayer = null;
-        }
-
-        // Parse and display episodes
-        modalEpisodes.innerHTML = ''; // Clear previous episodes
-        
-        // Use a document fragment to minimize DOM operations
-        const fragment = document.createDocumentFragment();
-        
-        if (video.vod_play_url) {
-            // The format seems to be Name1$URL1#Name2$URL2...
-            const playSources = video.vod_play_url.split('#');
-            // Populate global episodes array for selection modal and controls
-            currentEpisodes = playSources.map(src => {
-                const parts = src.split('$');
-                return { name: parts[0] || '', url: parts[1] || '' };
-            });
-            currentEpisodeIndex = 0;
-            
-            // Use batch processing for better performance with many episodes
-            const batchSize = 20;
-            for (let i = 0; i < playSources.length; i += batchSize) {
-                const batch = playSources.slice(i, i + batchSize);
-                
-                // Process this batch
-                batch.forEach(source => {
-                    const parts = source.split('$');
-                    if (parts.length === 2) {
-                        const name = parts[0];
-                        const url = parts[1];
-
-                        // Check if it's an m3u8 URL
-                        if (url && url.startsWith('http')) {
-                            const isM3u8 = url.includes('.m3u8');
-                            const link = document.createElement('a');
-                            link.href = 'javascript:void(0)'; // Use JavaScript instead of direct link
-                            link.textContent = name || '播放';
-                            link.dataset.url = url;
-                            link.dataset.name = name || 'Episode';
-                            // --- Add watched class if already watched ---
-                            if (isEpisodeWatched(videoId, name)) {
-                                link.classList.add('watched');
-                            } else {
-                                link.classList.remove('watched');
-                            }
-                            // If this is an m3u8 link, set up the event handler
-                            if (isM3u8) {
-                                link.addEventListener('click', function (e) {
-                                    e.preventDefault();
-                                    playM3u8Video(url, this);
-                                });
-                            } else {
-                                // For non-m3u8 links, we'll still open in a new tab
-                                link.target = '_blank';
-                                link.href = url;
-                            }
-
-                            fragment.appendChild(link);
-                        } else {
-                            console.warn(`Invalid episode URL found: ${url}`);
-                        }
+            } else {
+                // Fetch fresh data
+                data = await fetchData({ ac: 'detail', ids: videoId });
+                // Cache the response
+                if (data && data.list && data.list.length > 0) {
+                    try {
+                        sessionStorage.setItem(cacheKey, JSON.stringify(data));
+                    } catch (e) {
+                        console.error('Error caching video details', e);
                     }
-                });
-                
-                // If we have more batches, use setTimeout to avoid blocking the main thread
-                if (i + batchSize < playSources.length) {
-                    // This will be a synchronous operation since we're using a document fragment
-                    modalEpisodes.appendChild(fragment);
-                    
-                    // Return a promise to properly handle async batching
-                    return new Promise(resolve => {
-                        setTimeout(() => {
-                            showVideoDetails(videoId).then(resolve);
-                        }, 0);
-                    });
                 }
             }
-        } else {
-            const noEpisodes = document.createElement('div');
-            noEpisodes.textContent = 'No playback sources available.';
-            fragment.appendChild(noEpisodes);
-        }
-        
-        // Append all episodes at once
-        modalEpisodes.appendChild(fragment);
+            
+            if (!data || !data.list || data.list.length === 0) {
+                showToast('Failed to load video details.', 'error');
+                return false; // Signal failure to load video
+            }
 
-        // Update browser history to allow direct linking
-        updateBrowserHistory(videoId, video.vod_name);
+            const video = data.list[0]; // Assuming the first item is the one we want
 
-        modal.classList.add('open'); // Show the modal via CSS class
-        // Prevent background scroll
-        document.body.style.overflow = 'hidden';
+            // Store the current video ID for sharing
+            currentVideoId = videoId;
+            // Update Watch List button text based on storage
+            addToWatchListButton.textContent = watchList.includes(currentVideoId) ? '从观看列表移除' : '添加到观看列表';
 
-        // Prevent scroll propagation from modal-content to background
-        const modalContent = modal.querySelector('.modal-content');
-        if (modalContent && !modalContent._scrollLockAttached) {
-            modalContent.addEventListener('wheel', function (e) {
-                const delta = e.deltaY;
-                const up = delta < 0;
-                const scrollTop = modalContent.scrollTop;
-                const scrollHeight = modalContent.scrollHeight;
-                const offsetHeight = modalContent.offsetHeight;
-                if ((up && scrollTop === 0) || (!up && scrollTop + offsetHeight >= scrollHeight)) {
-                    e.preventDefault();
-                    e.stopPropagation();
+            // Update UI elements efficiently (batch DOM updates)
+            const updateUI = () => {
+                modalTitle.textContent = video.vod_name || 'No Title';
+                // Use more robust image URL handling
+                const validImageUrl = getValidImageUrl(video.vod_pic);
+                modalPoster.src = validImageUrl || 'data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22200%22%20height%3D%22300%22%20viewBox%3D%220%200%20200%20300%22%3E%3Crect%20fill%3D%22%23ddd%22%20width%3D%22200%22%20height%3D%22300%22%2F%3E%3Ctext%20fill%3D%22%23666%22%20font-family%3D%22sans-serif%22%20font-size%3D%2220%22%20x%3D%2250%25%22%20y%3D%2250%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%3ENo%20Image%3C%2Ftext%3E%3C%2Fsvg%3E';
+                modalYear.textContent = video.vod_year || 'N/A';
+                modalArea.textContent = video.vod_area || 'N/A';
+                modalLang.textContent = video.vod_lang || 'N/A';
+                modalDirector.textContent = video.vod_director || 'N/A';
+                modalActors.textContent = video.vod_actor || 'N/A';
+                modalRemarks.textContent = video.vod_remark || 'N/A';
+                // Use innerHTML for description in case it contains basic HTML
+                modalDescription.innerHTML = video.vod_content || 'No description available.';
+            };
+            
+            // Use requestAnimationFrame for smoother UI updates
+            requestAnimationFrame(updateUI);
+
+            // Handle image loading errors
+            modalPoster.onerror = () => {
+                modalPoster.src = 'data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22200%22%20height%3D%22300%22%20viewBox%3D%220%200%20200%20300%22%3E%3Crect%20fill%3D%22%23ddd%22%20width%3D%22200%22%20height%3D%22300%22%2F%3E%3Ctext%20fill%3D%22%23666%22%20font-family%3D%22sans-serif%22%20font-size%3D%2220%22%20x%3D%2250%25%22%20y%3D%2250%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%3ENo%20Image%3C%2Ftext%3E%3C%2Fsvg%3E';
+            }
+
+            // Reset the video player
+            if (videojsPlayer) {
+                videojsPlayer.dispose();
+                videojsPlayer = null;
+            }
+
+            // Parse and display episodes
+            modalEpisodes.innerHTML = ''; // Clear previous episodes
+            
+            // Use a document fragment to minimize DOM operations
+            const fragment = document.createDocumentFragment();
+            
+            if (video.vod_play_url) {
+                // The format seems to be Name1$URL1#Name2$URL2...
+                const playSources = video.vod_play_url.split('#');
+                // Populate global episodes array for selection modal and controls
+                currentEpisodes = playSources.map(src => {
+                    const parts = src.split('$');
+                    return { name: parts[0] || '', url: parts[1] || '' };
+                });
+                currentEpisodeIndex = 0;
+                
+                // Use batch processing for better performance with many episodes
+                const batchSize = 20;
+                for (let i = 0; i < playSources.length; i += batchSize) {
+                    const batch = playSources.slice(i, i + batchSize);
+                    
+                    // Process this batch
+                    batch.forEach(source => {
+                        const parts = source.split('$');
+                        if (parts.length === 2) {
+                            const name = parts[0];
+                            const url = parts[1];
+
+                            // Check if it's an m3u8 URL
+                            if (url && url.startsWith('http')) {
+                                const isM3u8 = url.includes('.m3u8');
+                                const link = document.createElement('a');
+                                link.href = 'javascript:void(0)'; // Use JavaScript instead of direct link
+                                link.textContent = name || '播放';
+                                link.dataset.url = url;
+                                link.dataset.name = name || 'Episode';
+                                // --- Add watched class if already watched ---
+                                if (isEpisodeWatched(videoId, name)) {
+                                    link.classList.add('watched');
+                                } else {
+                                    link.classList.remove('watched');
+                                }
+                                // If this is an m3u8 link, set up the event handler
+                                if (isM3u8) {
+                                    link.addEventListener('click', function (e) {
+                                        e.preventDefault();
+                                        playM3u8Video(url, this);
+                                    });
+                                } else {
+                                    // For non-m3u8 links, we'll still open in a new tab
+                                    link.target = '_blank';
+                                    link.href = url;
+                                }
+
+                                fragment.appendChild(link);
+                            } else {
+                                console.warn(`Invalid episode URL found: ${url}`);
+                            }
+                        }
+                    });
+                    
+                    // If we have more batches, use setTimeout to avoid blocking the main thread
+                    if (i + batchSize < playSources.length) {
+                        // This will be a synchronous operation since we're using a document fragment
+                        modalEpisodes.appendChild(fragment);
+                        
+                        // Return a promise to properly handle async batching
+                        return new Promise(resolve => {
+                            setTimeout(() => {
+                                showVideoDetails(videoId).then(resolve);
+                            }, 0);
+                        });
+                    }
                 }
-            }, { passive: false });
-            modalContent._scrollLockAttached = true;
+            } else {
+                const noEpisodes = document.createElement('div');
+                noEpisodes.textContent = 'No playback sources available.';
+                fragment.appendChild(noEpisodes);
+            }
+            
+            // Append all episodes at once
+            modalEpisodes.appendChild(fragment);
+
+            // Update browser history to allow direct linking
+            updateBrowserHistory(videoId, video.vod_name);
+
+            modal.classList.add('open'); // Show the modal via CSS class
+            
+            // Check if we have a previously watched episode for this video and auto-play it
+            try {
+                const watched = getWatchedEpisodes();
+                if (watched[videoId] && watched[videoId].length > 0 && currentEpisodes.length > 0) {
+                    // Find the last watched episode
+                    const lastWatchedEpisode = watched[videoId][watched[videoId].length - 1];
+                    const episodeIndex = currentEpisodes.findIndex(ep => ep.name === lastWatchedEpisode);
+                    
+                    if (episodeIndex >= 0) {
+                        // Found the episode, play it after a short delay
+                        setTimeout(() => {
+                            playEpisode(episodeIndex);
+                        }, 500);
+                    }
+                }
+            } catch (err) {
+                console.error('Error auto-playing last watched episode:', err);
+            }
+            
+            // Prevent background scroll
+            document.body.style.overflow = 'hidden';
+            
+            // Prevent scroll propagation from modal-content to background
+            const modalContent = modal.querySelector('.modal-content');
+            if (modalContent && !modalContent._scrollLockAttached) {
+                modalContent.addEventListener('wheel', function (e) {
+                    const delta = e.deltaY;
+                    const up = delta < 0;
+                    const scrollTop = modalContent.scrollTop;
+                    const scrollHeight = modalContent.scrollHeight;
+                    const offsetHeight = modalContent.offsetHeight;
+                    if ((up && scrollTop === 0) || (!up && scrollTop + offsetHeight >= scrollHeight)) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                    }
+                }, { passive: false });
+                modalContent._scrollLockAttached = true;
+            }
+            
+            return true; // Signal success
+        } catch (error) {
+            console.error('Error in showVideoDetails:', error);
+            showToast('Failed to load video details. Please try again.', 'error');
+            
+            // Ensure scrolling is restored
+            document.body.style.overflow = '';
+            updateBodyScrollLock();
+            
+            return false; // Signal failure
         }
     }
 
@@ -1141,6 +1174,11 @@ document.addEventListener('DOMContentLoaded', () => {
     function updateBodyScrollLock() {
         const anyOpen = document.querySelector('.modal.open');
         document.body.style.overflow = anyOpen ? 'hidden' : '';
+        
+        // Backup check to make sure we don't permanently lock scrolling if something goes wrong
+        if (!anyOpen && document.body.style.overflow === 'hidden') {
+            document.body.style.overflow = '';
+        }
     }
 
     // --- Event Listeners ---
@@ -1541,13 +1579,28 @@ document.addEventListener('DOMContentLoaded', () => {
         const videoId = urlParams.get('video');
 
         if (videoId) {
+            // First restore normal scroll state to ensure page is usable even if video loading fails
+            document.body.style.overflow = '';
+            
             // Delay loading the shared video to allow the page to render first
             showToast('Loading video...', 'info');
             setTimeout(() => {
-                showVideoDetails(videoId).catch(err => {
-                    console.error('Error loading shared video:', err);
-                    showToast('Failed to load video. Please try again.', 'error');
-                });
+                showVideoDetails(videoId)
+                    .then(success => {
+                        // If showVideoDetails resolved successfully, it will set scroll lock
+                        if (!success) {
+                            // If it returned false specifically, we need to restore scrolling
+                            document.body.style.overflow = '';
+                            updateBodyScrollLock();
+                        }
+                    })
+                    .catch(err => {
+                        console.error('Error loading shared video:', err);
+                        showToast('Failed to load video. Please try again.', 'error');
+                        // Ensure scrolling is restored if there's an error
+                        document.body.style.overflow = '';
+                        updateBodyScrollLock();
+                    });
             }, 1000);
         }
     }
