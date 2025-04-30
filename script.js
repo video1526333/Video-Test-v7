@@ -316,9 +316,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function fetchData(params, silent = false) {
         if (!silent) showLoading();
-        // Build query string
-        const queryParams = new URLSearchParams(params).toString();
-        const targetUrl = `${apiUrl}?${queryParams}`;
+        // Build raw target URL with unencoded params (so searchTerm remains raw for proxy encoding)
+        const rawQuery = Object.entries(params)
+            .map(([key, val]) => `${key}=${val}`)
+            .join('&');
+        const targetUrlRaw = `${apiUrl}?${rawQuery}`;
 
         // Track original proxy index to avoid infinite loop
         const originalProxyIndex = currentProxyIndex;
@@ -326,16 +328,19 @@ document.addEventListener('DOMContentLoaded', () => {
         let success = false;
         let responseData = null;
 
-        // Try up to all available proxies
+        // Try up to all available proxies (including direct fetch if proxy is empty string)
         while (!success && proxyAttempts < corsProxies.length) {
-            // Use the current proxy: pass the raw targetUrl to avoid double-encoding percent escapes
-            const proxyUrl = corsProxies[currentProxyIndex] + targetUrl;
+            const prefix = corsProxies[currentProxyIndex];
+            // Determine fetch URL: encode entire raw URL for proxy usage, or use raw URL if no proxy
+            const fetchUrl = prefix
+                ? prefix + encodeURIComponent(targetUrlRaw)
+                : targetUrlRaw;
 
             try {
-                console.log(`Fetching via CORS proxy ${currentProxyIndex + 1}: ${proxyUrl}`);
+                console.log(`Fetching via CORS proxy ${currentProxyIndex + 1}: ${fetchUrl}`);
                 console.log('Request params:', params);
 
-                const response = await fetch(proxyUrl);
+                const response = await fetch(fetchUrl);
 
                 // Handle HTTP error status (including 404)
                 if (!response.ok) {
