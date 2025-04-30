@@ -1294,3 +1294,9 @@ button:hover,
 .modal-episodes a:hover {
   text-decoration: underline !important;
 }
+
+/* Force video card text to white */
+.video-card h3,
+.video-card p {
+  color: var(--bw-text) !important;
+}
