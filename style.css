@@ -233,10 +233,11 @@ header h1 {
   box-shadow: none !important;
 }
 
-#categoryNav ul li:hover:not(.active) {
-  background: rgba(174, 140, 255, 0.13);
-  color: var(--accent);
-  border: 1.5px solid var(--accent);
+#categoryNav ul li:hover,
+#categoryNav ul li:hover:not(.active),
+#categoryList li:hover {
+  background: var(--bw-bg) !important;
+  color: var(--bw-text) !important;
 }
 
 .tab {
