@@ -1190,8 +1190,62 @@ document.addEventListener('DOMContentLoaded', () => {
                 console.error('[Resume Debug] Playback error (autoplay?):', e);
                 // Try to restore mute state anyway
                 setTimeout(() => { videoPlayer.muted = wasMuted; }, 200);
+                
+                // Add play button overlay for user interaction when autoplay fails
+                showPlayOverlay();
             });
         };
+        
+        // New function to show play button overlay when autoplay is blocked
+        function showPlayOverlay() {
+            // Check if overlay already exists
+            if (document.getElementById('playOverlay')) return;
+            
+            // Create play button overlay
+            const overlay = document.createElement('div');
+            overlay.id = 'playOverlay';
+            overlay.style.position = 'absolute';
+            overlay.style.top = '0';
+            overlay.style.left = '0';
+            overlay.style.width = '100%';
+            overlay.style.height = '100%';
+            overlay.style.backgroundColor = 'rgba(0,0,0,0.5)';
+            overlay.style.display = 'flex';
+            overlay.style.justifyContent = 'center';
+            overlay.style.alignItems = 'center';
+            overlay.style.zIndex = '100';
+            overlay.style.cursor = 'pointer';
+            
+            // Create play icon
+            const playIcon = document.createElement('div');
+            playIcon.innerHTML = '▶️';
+            playIcon.style.fontSize = '4rem';
+            playIcon.style.color = 'white';
+            overlay.appendChild(playIcon);
+            
+            // Add click handler to start playback
+            overlay.addEventListener('click', function() {
+                videoPlayer.muted = false;
+                videoPlayer.play()
+                    .then(() => {
+                        overlay.remove();
+                        console.log('Video playback started by user interaction');
+                    })
+                    .catch(err => {
+                        console.error('Still failed to play after user interaction:', err);
+                        showToast('Unable to play video. Please try again.', 'error');
+                    });
+            });
+            
+            // Add overlay to video container
+            const videoContainer = document.querySelector('.video-player-container');
+            videoContainer.style.position = 'relative';
+            videoContainer.appendChild(overlay);
+            
+            // Show toast to inform user
+            showToast('Click to play video', 'info', 3000);
+        }
+        
         // If the video element is ready, set currentTime; otherwise, listen for loadedmetadata
         if (videoPlayer.readyState >= 1) {
             setResumeTime();
