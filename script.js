@@ -328,8 +328,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Try up to all available proxies
         while (!success && proxyAttempts < corsProxies.length) {
-            // Use the current proxy
-            const proxyUrl = corsProxies[currentProxyIndex] + encodeURIComponent(targetUrl);
+            // Use the current proxy: pass the raw targetUrl to avoid double-encoding percent escapes
+            const proxyUrl = corsProxies[currentProxyIndex] + targetUrl;
 
             try {
                 console.log(`Fetching via CORS proxy ${currentProxyIndex + 1}: ${proxyUrl}`);
