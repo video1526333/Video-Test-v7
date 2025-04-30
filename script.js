@@ -985,9 +985,6 @@ document.addEventListener('DOMContentLoaded', () => {
     function playM3u8Video(url, linkElement, retryCount = 0) {
         const MAX_RETRIES = 3;
         
-        // Reset fullscreen prevention flag for new video playback
-        window.preventAutoFullscreen = false;
-        
         // Add a global loading timeout to prevent hanging
         let loadingTimeout = setTimeout(() => {
             showToast('Video loading timed out. Please try again.', 'error');
@@ -1189,13 +1186,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 console.log('[Resume Debug] play() called after setting currentTime.');
                 // Restore mute state after playback starts
                 setTimeout(() => { videoPlayer.muted = wasMuted; }, 200);
-                
-                // Request fullscreen mode with a slight delay to ensure it works across browsers
-                setTimeout(() => {
-                    // Get the video container for better fullscreen experience
-                    const videoContainer = document.querySelector('.video-player-container');
-                    requestFullscreen(videoContainer);
-                }, 300); // Short delay to ensure video has started playing
             }).catch(e => {
                 console.error('[Resume Debug] Playback error (autoplay?):', e);
                 // Try to restore mute state anyway
@@ -1236,34 +1226,32 @@ document.addEventListener('DOMContentLoaded', () => {
             // Add click handler to start playback
             overlay.addEventListener('click', function() {
                 videoPlayer.muted = false;
-                
-                // Reset the fullscreen prevention flag since this is a direct user interaction
-                window.preventAutoFullscreen = false;
-                
                 videoPlayer.play()
                     .then(() => {
                         overlay.remove();
                         console.log('Video playback started by user interaction');
                         
-                        // Request fullscreen immediately from user interaction (this should work reliably)
-                        try {
-                            const videoContainer = document.querySelector('.video-player-container');
-                            // Direct calls are more likely to work from user gestures
-                            if (videoContainer.requestFullscreen) {
-                                videoContainer.requestFullscreen().catch(e => {
-                                    console.warn('Direct fullscreen request rejected:', e);
-                                });
-                            } else if (videoContainer.webkitRequestFullscreen) {
-                                videoContainer.webkitRequestFullscreen();
-                            } else if (videoContainer.mozRequestFullscreen) {
-                                videoContainer.mozRequestFullscreen();
-                            } else if (videoContainer.msRequestFullscreen) {
-                                videoContainer.msRequestFullscreen();
+                        // Request fullscreen mode with a slight delay to ensure it works across browsers
+                        setTimeout(() => {
+                            try {
+                                // Get the video container for better fullscreen experience
+                                const videoContainer = document.querySelector('.video-player-container');
+                                
+                                // Try the standard fullscreen API and various browser-specific versions
+                                if (videoContainer.requestFullscreen) {
+                                    videoContainer.requestFullscreen();
+                                } else if (videoContainer.webkitRequestFullscreen) { // Safari
+                                    videoContainer.webkitRequestFullscreen();
+                                } else if (videoContainer.mozRequestFullscreen) { // Firefox
+                                    videoContainer.mozRequestFullscreen();
+                                } else if (videoContainer.msRequestFullscreen) { // IE/Edge
+                                    videoContainer.msRequestFullscreen();
+                                }
+                                console.log('Requested fullscreen mode');
+                            } catch (e) {
+                                console.warn('Failed to enter fullscreen mode:', e);
                             }
-                            console.log('Requested fullscreen from direct user interaction');
-                        } catch (e) {
-                            console.warn('Failed to enter fullscreen mode from click:', e);
-                        }
+                        }, 300); // Short delay to ensure video has started playing
                     })
                     .catch(err => {
                         console.error('Still failed to play after user interaction:', err);
@@ -1286,58 +1274,6 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             videoPlayer.addEventListener('loadedmetadata', setResumeTime, { once: true });
         }
-        
-        // Add a playing event listener to ensure fullscreen when video starts playing through any means
-        videoPlayer.addEventListener('playing', function playingHandler() {
-            // Remove this listener immediately to prevent multiple calls
-            videoPlayer.removeEventListener('playing', playingHandler);
-            
-            // Only try to go fullscreen on initial play, not on resume after pause
-            if (videoPlayer.currentTime < 1 && !window.preventAutoFullscreen) {
-                // Wait longer before attempting fullscreen to ensure it's considered a user gesture
-                setTimeout(() => {
-                    // Check if we're already in fullscreen or if auto-fullscreen is prevented
-                    const isFullScreen = document.fullscreenElement || 
-                                       document.webkitFullscreenElement || 
-                                       document.mozFullScreenElement || 
-                                       document.msFullscreenElement;
-                    
-                    // Only request if we're still not in fullscreen
-                    if (!isFullScreen && !window.preventAutoFullscreen) {
-                        const videoContainer = document.querySelector('.video-player-container');
-                        requestFullscreen(videoContainer);
-                    }
-                }, 1500); // Longer delay to ensure playback has started and avoid permission issues
-            }
-        });
-        
-        // Clean up all previous listener instances
-        const oldListeners = videoPlayer._fullscreenListeners || [];
-        oldListeners.forEach(info => {
-            videoPlayer.removeEventListener(info.type, info.fn);
-        });
-        
-        videoPlayer._fullscreenListeners = [];
-        
-        // Add listeners for fullscreen events only once per video load
-        const fullscreenChangeHandler = function() {
-            // Don't do anything if we're in the middle of handling fullscreen
-            if (window.isHandlingFullscreenChange) return;
-            
-            // Mark that user has manually controlled fullscreen
-            window.preventAutoFullscreen = true;
-            console.log('User toggled fullscreen via player controls');
-        };
-        
-        // Store event listeners for later cleanup
-        ['fullscreenchange', 'webkitfullscreenchange'].forEach(eventType => {
-            videoPlayer.addEventListener(eventType, fullscreenChangeHandler);
-            videoPlayer._fullscreenListeners.push({
-                type: eventType,
-                fn: fullscreenChangeHandler
-            });
-        });
-        
         // Save playback position on timeupdate (only if >5s and not near end)
         videoPlayer.ontimeupdate = function () {
             if (currentVideoId && linkElement && linkElement.dataset.name) {
@@ -1383,170 +1319,6 @@ document.addEventListener('DOMContentLoaded', () => {
         // Backup check to make sure we don't permanently lock scrolling if something goes wrong
         if (!anyOpen && document.body.style.overflow === 'hidden') {
             document.body.style.overflow = '';
-        }
-    }
-
-    // Function to detect iOS devices
-    function isIOS() {
-        return [
-            'iPad Simulator',
-            'iPhone Simulator',
-            'iPod Simulator',
-            'iPad',
-            'iPhone',
-            'iPod'
-        ].includes(navigator.platform)
-        // iOS 13+ detection
-        || (navigator.userAgent.includes("Mac") && "ontouchend" in document);
-    }
-
-    // Function to request fullscreen with device-specific handling
-    function requestFullscreen(element) {
-        try {
-            // Don't attempt if we've already marked to prevent auto-fullscreen
-            if (window.preventAutoFullscreen) {
-                console.log('Auto fullscreen prevented by user preference');
-                return false;
-            }
-            
-            // Don't attempt if we're already in fullscreen
-            const isAlreadyFullscreen = document.fullscreenElement || 
-                           document.webkitFullscreenElement || 
-                           document.mozFullScreenElement || 
-                           document.msFullscreenElement;
-                           
-            if (isAlreadyFullscreen) {
-                console.log('Already in fullscreen mode, skipping request');
-                return false;
-            }
-            
-            // Store timestamp of last fullscreen request to prevent rapid repeated calls
-            const now = Date.now();
-            if (window.lastFullscreenRequest && (now - window.lastFullscreenRequest) < 1000) {
-                console.log('Skipping fullscreen request - too soon after previous request');
-                return false;
-            }
-            window.lastFullscreenRequest = now;
-            
-            if (element) {
-                if (isIOS()) {
-                    // On iOS, we need to handle this differently
-                    // Try the video element directly on iOS
-                    const video = document.getElementById('videoPlayer');
-                    if (video && video.webkitEnterFullscreen) {
-                        video.webkitEnterFullscreen();
-                        console.log('Requested iOS-specific fullscreen mode');
-                        return true;
-                    }
-                }
-                
-                // Standard approach for other browsers
-                if (element.requestFullscreen) {
-                    element.requestFullscreen().catch(e => {
-                        console.warn('Fullscreen request was rejected:', e);
-                        window.preventAutoFullscreen = true; // Prevent further attempts
-                    });
-                } else if (element.webkitRequestFullscreen) { // Safari
-                    element.webkitRequestFullscreen();
-                } else if (element.mozRequestFullscreen) { // Firefox
-                    element.mozRequestFullscreen();
-                } else if (element.msRequestFullscreen) { // IE/Edge
-                    element.msRequestFullscreen();
-                }
-                console.log('Requested fullscreen mode');
-                return true;
-            }
-        } catch (e) {
-            console.warn('Failed to enter fullscreen mode:', e);
-            window.preventAutoFullscreen = true; // Prevent further attempts on error
-        }
-        return false;
-    }
-    
-    // Function to exit fullscreen with device-specific handling
-    function exitFullscreen() {
-        try {
-            // Handle iOS first as it's special
-            if (isIOS()) {
-                const video = document.getElementById('videoPlayer');
-                if (video) {
-                    // Try iOS-specific methods
-                    if (video.webkitExitFullscreen) {
-                        video.webkitExitFullscreen();
-                        console.log('Used iOS-specific webkitExitFullscreen');
-                        return true;
-                    } else if (video.webkitExitFullScreen) {
-                        video.webkitExitFullScreen();
-                        console.log('Used iOS-specific webkitExitFullScreen');
-                        return true;
-                    }
-                    
-                    // If video is in picture-in-picture, exit that too
-                    if (document.pictureInPictureElement === video && document.exitPictureInPicture) {
-                        document.exitPictureInPicture().catch(e => {
-                            console.warn('Failed to exit PiP:', e);
-                        });
-                    }
-                    
-                    // On iOS, sometimes we need to pause the video to exit fullscreen
-                    video.pause();
-                }
-            }
-            
-            // Standard methods for other browsers
-            if (document.exitFullscreen) {
-                document.exitFullscreen();
-            } else if (document.webkitExitFullscreen) { // Safari
-                document.webkitExitFullscreen();
-            } else if (document.mozCancelFullScreen) { // Firefox
-                document.mozCancelFullScreen();
-            } else if (document.msExitFullscreen) { // IE/Edge
-                document.msExitFullscreen();
-            }
-            
-            console.log('Exited fullscreen mode');
-            return true;
-        } catch (e) {
-            console.warn('Failed to exit fullscreen mode:', e);
-        }
-        return false;
-    }
-    
-    // Track fullscreen state changes
-    document.removeEventListener('fullscreenchange', handleFullscreenChange);
-    document.removeEventListener('webkitfullscreenchange', handleFullscreenChange);
-    document.removeEventListener('mozfullscreenchange', handleFullscreenChange);
-    document.removeEventListener('MSFullscreenChange', handleFullscreenChange);
-    
-    document.addEventListener('fullscreenchange', handleFullscreenChange);
-    document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
-    document.addEventListener('mozfullscreenchange', handleFullscreenChange);
-    document.addEventListener('MSFullscreenChange', handleFullscreenChange);
-    
-    // Global flag to track if we're handling a fullscreen change already
-    window.isHandlingFullscreenChange = false;
-    
-    // Handler for fullscreen change events
-    function handleFullscreenChange() {
-        // Prevent duplicate event handling
-        if (window.isHandlingFullscreenChange) {
-            return;
-        }
-        
-        window.isHandlingFullscreenChange = true;
-        setTimeout(() => { window.isHandlingFullscreenChange = false; }, 300);
-        
-        const isFullscreen = document.fullscreenElement || 
-                            document.webkitFullscreenElement || 
-                            document.mozFullScreenElement || 
-                            document.msFullscreenElement;
-                            
-        console.log('Fullscreen state changed:', isFullscreen ? 'entered' : 'exited');
-        
-        // If user manually exited fullscreen, prevent auto re-entering
-        if (!isFullscreen) {
-            window.preventAutoFullscreen = true;
-            console.log('Auto fullscreen disabled by user action');
         }
     }
 
@@ -1718,34 +1490,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Video player modal close
     closeVideoPlayerButton.addEventListener('click', () => {
-        // First exit fullscreen if we're in it
-        const isFullscreen = document.fullscreenElement || 
-                           document.webkitFullscreenElement || 
-                           document.mozFullScreenElement || 
-                           document.msFullscreenElement;
-        
-        if (isFullscreen) {
-            // Use a try-catch to handle potential errors when exiting fullscreen
-            try {
-                exitFullscreen();
-                // Wait a bit to let the fullscreen exit complete
-                setTimeout(() => {
-                    closeVideoPlayerCleanup();
-                }, 100);
-            } catch (e) {
-                console.error('Error exiting fullscreen:', e);
-                closeVideoPlayerCleanup();
-            }
-        } else {
-            closeVideoPlayerCleanup();
-        }
-    });
-    
-    // Separate function to handle video player cleanup
-    function closeVideoPlayerCleanup() {
         videoPlayerModal.classList.remove('open');
         updateBodyScrollLock();
-        
         // Stop the video and clean up resources
         videoPlayer.pause();
         
@@ -1765,26 +1511,9 @@ document.addEventListener('DOMContentLoaded', () => {
         videoPlayer.removeAttribute('src');
         videoPlayer.load();
         
-        // Clean up event listeners
-        if (videoPlayer._fullscreenListeners) {
-            videoPlayer._fullscreenListeners.forEach(info => {
-                videoPlayer.removeEventListener(info.type, info.fn);
-            });
-            videoPlayer._fullscreenListeners = [];
-        }
-        
         // disable wake lock
-        try { 
-            noSleep.disable(); 
-            console.log('Wake Lock disabled'); 
-        } catch(e) {
-            console.error('Error disabling wake lock:', e);
-        }
-        
-        // Reset the auto-fullscreen prevention flag when closing the player
-        window.preventAutoFullscreen = false;
-        console.log('Video player closed and cleaned up');
-    }
+        try { noSleep.disable(); console.log('Wake Lock disabled'); } catch(e) {}
+    });
 
     // Share button click
     shareButton.addEventListener('click', showShareModal);
@@ -1816,27 +1545,15 @@ document.addEventListener('DOMContentLoaded', () => {
             updateBodyScrollLock();
         }
         if (event.target === videoPlayerModal) { // Close if clicked outside the video player modal content
-            // First check if we're in fullscreen
-            const isFullscreen = document.fullscreenElement || 
-                              document.webkitFullscreenElement || 
-                              document.mozFullScreenElement || 
-                              document.msFullscreenElement;
-            
-            if (isFullscreen) {
-                // Exit fullscreen first
-                try {
-                    exitFullscreen();
-                    // Wait a bit to allow fullscreen to exit before closing modal
-                    setTimeout(() => {
-                        closeVideoPlayerCleanup();
-                    }, 100);
-                } catch (e) {
-                    console.error('Error exiting fullscreen:', e);
-                    closeVideoPlayerCleanup();
-                }
-            } else {
-                closeVideoPlayerCleanup();
+            videoPlayerModal.classList.remove('open');
+            updateBodyScrollLock();
+            // Stop the video
+            if (videojsPlayer) {
+                videojsPlayer.dispose();
+                videojsPlayer = null;
             }
+            videoPlayer.pause();
+            if (hlsPlayer) { hlsPlayer.destroy(); hlsPlayer = null; }
         }
         if (event.target === settingsModal) { // Close settings modal if clicked outside
             settingsModal.classList.remove('open');
