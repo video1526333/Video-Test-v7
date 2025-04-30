@@ -1336,9 +1336,10 @@ button:hover,
   display: none;
 }
 #selectEpisodeModal.modal.open {
-  display: flex;
+  display: flex !important;
   align-items: center;
   justify-content: center;
+  z-index: 2000 !important;
 }
 .select-episode-modal {
   position: relative;
