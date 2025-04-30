@@ -691,7 +691,13 @@ document.addEventListener('DOMContentLoaded', () => {
         if (video.vod_play_url) {
             // The format seems to be Name1$URL1#Name2$URL2...
             const playSources = video.vod_play_url.split('#');
-
+            // Populate global episodes array for selection modal and controls
+            currentEpisodes = playSources.map(src => {
+                const parts = src.split('$');
+                return { name: parts[0] || '', url: parts[1] || '' };
+            });
+            currentEpisodeIndex = 0;
+            
             playSources.forEach(source => {
                 const parts = source.split('$');
                 if (parts.length === 2) {
