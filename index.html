@@ -1,18 +1,21 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Video Portal</title>
     <link rel="stylesheet" href="style.css">
     <!-- Favicon -->
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='0.9em' font-size='90'>🎬</text></svg>">
+    <link rel="icon"
+        href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='0.9em' font-size='90'>🎬</text></svg>">
     <!-- PWA Stuff -->
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#1e1e1e">
     <!-- Add HLS.js for m3u8 playback -->
     <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
 </head>
+
 <body>
 
     <div class="container">
@@ -20,9 +23,9 @@
             <button id="headerWatchListBtn" class="header-btn">Watch List</button>
             <div class="search-container">
                 <!-- Hamburger menu removed for simplicity -->
-<input type="text" id="searchInput" placeholder="Search videos">
-<button id="searchButton">Search</button>
-<button id="settingsButton" class="settings-button">⚙️</button>
+                <input type="text" id="searchInput" placeholder="Search videos">
+                <button id="searchButton">Search</button>
+                <button id="settingsButton" class="settings-button">⚙️</button>
             </div>
         </header>
 
@@ -42,7 +45,8 @@
     </div>
 
     <!-- Video Detail Modal -->
-    <div id="videoDetailModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle" aria-describedby="modalDescription">
+    <div id="videoDetailModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle"
+        aria-describedby="modalDescription">
         <div class="modal-content">
             <span class="close-button">&times;</span>
             <div class="modal-poster">
@@ -110,13 +114,13 @@
                 <input type="password" id="passwordInput" placeholder="Password">
                 <button id="submitPassword">Submit</button>
                 <p id="passwordMessage"></p>
-                
-<!-- Export/Import All User Data -->
-<div class="userdata-import-export" style="margin-top:1rem;">
-    <button id="exportAllUserDataButton">Export All Data</button>
-    <input type="file" id="importAllUserDataInput" accept=".json" style="display:none;">
-    <button id="importAllUserDataButton">Import All Data</button>
-</div>
+
+                <!-- Export/Import All User Data -->
+                <div class="userdata-import-export" style="margin-top:1rem;">
+                    <button id="exportAllUserDataButton">Export All Data</button>
+                    <input type="file" id="importAllUserDataInput" accept=".json" style="display:none;">
+                    <button id="importAllUserDataButton">Import All Data</button>
+                </div>
             </div>
         </div>
     </div>
@@ -140,4 +144,5 @@
 
     <script src="script.js"></script>
 </body>
+
 </html>

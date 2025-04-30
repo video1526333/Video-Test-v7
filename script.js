@@ -1453,7 +1453,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // Seek and play
             videoPlayer.currentTime = resumeTime;
             videoPlayer.play();
-            showToast(`Resumed at ${Math.floor(resumeTime/60)}:${String(Math.floor(resumeTime%60)).padStart(2,'0')}`, 'info');
+            showToast(`Resumed at ${Math.floor(resumeTime / 60)}:${String(Math.floor(resumeTime % 60)).padStart(2, '0')}`, 'info');
         }
     });
 
@@ -1468,16 +1468,16 @@ document.addEventListener('DOMContentLoaded', () => {
         episodeControls.textContent = `Episode ${index + 1} of ${currentEpisodes.length}`;
         prevBtn.disabled = (index === 0);
         nextBtn.disabled = (index === currentEpisodes.length - 1);
-        
+
         // Check resume time for this episode
         const resumeTime = getPlaybackPosition(currentVideoId, ep.name);
         if (resumeTime > 1) {
             resumeBtn.style.display = 'block';
-            resumeBtn.textContent = `Resume at ${Math.floor(resumeTime/60)}:${String(Math.floor(resumeTime%60)).padStart(2,'0')}`;
+            resumeBtn.textContent = `Resume at ${Math.floor(resumeTime / 60)}:${String(Math.floor(resumeTime % 60)).padStart(2, '0')}`;
         } else {
             resumeBtn.style.display = 'none';
         }
-        
+
         // Play video with resume logic
         const dummyLink = document.createElement('a');
         dummyLink.dataset.name = ep.name;
