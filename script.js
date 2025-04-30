@@ -446,7 +446,8 @@ document.addEventListener('DOMContentLoaded', () => {
         settingsLi.textContent = '设置';
         settingsLi.id = 'settingsNav';
         categoryList.appendChild(settingsLi);
-        settingsLi.addEventListener('click', () => {
+        settingsLi.addEventListener('click', (e) => {
+          e.stopPropagation();
           settingsModal.classList.add('open');
           updateBodyScrollLock();
         });
@@ -455,7 +456,8 @@ document.addEventListener('DOMContentLoaded', () => {
         historyLi.textContent = '观看历史';
         historyLi.id = 'historyNav';
         categoryList.appendChild(historyLi);
-        historyLi.addEventListener('click', () => {
+        historyLi.addEventListener('click', (e) => {
+          e.stopPropagation();
           renderWatchHistory();
           watchHistoryModal.classList.add('open');
           updateBodyScrollLock();
