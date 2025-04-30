@@ -1231,25 +1231,27 @@ document.addEventListener('DOMContentLoaded', () => {
                         overlay.remove();
                         console.log('Video playback started by user interaction');
                         
-                        // Request fullscreen mode
-                        try {
-                            // Get the video container for better fullscreen experience
-                            const videoContainer = document.querySelector('.video-player-container');
-                            
-                            // Try the standard fullscreen API and various browser-specific versions
-                            if (videoContainer.requestFullscreen) {
-                                videoContainer.requestFullscreen();
-                            } else if (videoContainer.webkitRequestFullscreen) { // Safari
-                                videoContainer.webkitRequestFullscreen();
-                            } else if (videoContainer.mozRequestFullscreen) { // Firefox
-                                videoContainer.mozRequestFullscreen();
-                            } else if (videoContainer.msRequestFullscreen) { // IE/Edge
-                                videoContainer.msRequestFullscreen();
+                        // Request fullscreen mode with a slight delay to ensure it works across browsers
+                        setTimeout(() => {
+                            try {
+                                // Get the video container for better fullscreen experience
+                                const videoContainer = document.querySelector('.video-player-container');
+                                
+                                // Try the standard fullscreen API and various browser-specific versions
+                                if (videoContainer.requestFullscreen) {
+                                    videoContainer.requestFullscreen();
+                                } else if (videoContainer.webkitRequestFullscreen) { // Safari
+                                    videoContainer.webkitRequestFullscreen();
+                                } else if (videoContainer.mozRequestFullscreen) { // Firefox
+                                    videoContainer.mozRequestFullscreen();
+                                } else if (videoContainer.msRequestFullscreen) { // IE/Edge
+                                    videoContainer.msRequestFullscreen();
+                                }
+                                console.log('Requested fullscreen mode');
+                            } catch (e) {
+                                console.warn('Failed to enter fullscreen mode:', e);
                             }
-                            console.log('Requested fullscreen mode');
-                        } catch (e) {
-                            console.warn('Failed to enter fullscreen mode:', e);
-                        }
+                        }, 300); // Short delay to ensure video has started playing
                     })
                     .catch(err => {
                         console.error('Still failed to play after user interaction:', err);
@@ -1727,6 +1729,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function checkForSharedVideo() {
         const urlParams = new URLSearchParams(window.location.search);
         const videoId = urlParams.get('video');
+        const episodeParam = urlParams.get('episode'); // Add support for episode parameter
 
         if (videoId) {
             // First restore normal scroll state to ensure page is usable even if video loading fails
@@ -1754,6 +1757,44 @@ document.addEventListener('DOMContentLoaded', () => {
                             // If it returned false specifically, we need to restore scrolling
                             document.body.style.overflow = '';
                             updateBodyScrollLock();
+                            return;
+                        }
+                        
+                        // If we have an episode parameter and the video loaded successfully, play that episode
+                        if (episodeParam && currentEpisodes && currentEpisodes.length > 0) {
+                            // Try to find the episode by name first
+                            const epIndex = currentEpisodes.findIndex(ep => 
+                                ep.name === episodeParam || 
+                                ep.name === `第${episodeParam}集` || 
+                                ep.name === `第${episodeParam}话`
+                            );
+                            
+                            if (epIndex >= 0) {
+                                // Found the specific episode
+                                setTimeout(() => {
+                                    playEpisode(epIndex);
+                                }, 500);
+                            } else {
+                                // Try to treat episode param as an index
+                                const numericIndex = parseInt(episodeParam, 10);
+                                if (!isNaN(numericIndex) && numericIndex > 0 && numericIndex <= currentEpisodes.length) {
+                                    setTimeout(() => {
+                                        playEpisode(numericIndex - 1); // Adjust for 0-based indexing
+                                    }, 500);
+                                } else {
+                                    // Default to first episode if we can't find a match
+                                    setTimeout(() => {
+                                        playEpisode(0);
+                                    }, 500);
+                                }
+                            }
+                        } else {
+                            // Default behavior: auto-play first episode when no episode specified
+                            if (currentEpisodes && currentEpisodes.length > 0) {
+                                setTimeout(() => {
+                                    playEpisode(0);
+                                }, 500);
+                            }
                         }
                     })
                     .catch(err => {
