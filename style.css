@@ -1271,7 +1271,9 @@ button:hover,
   border-bottom: 1px solid var(--bw-border) !important;
 }
 #categoryList li.active {
-  background: var(--bw-surface-light) !important;
+  background: var(--bw-bg) !important;
+  color: var(--bw-text) !important;
+  border-bottom-color: var(--bw-bg) !important;
 }
 
 /* Toast notifications */
