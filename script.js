@@ -331,10 +331,14 @@ document.addEventListener('DOMContentLoaded', () => {
         // Try up to all available proxies (including direct fetch if proxy is empty string)
         while (!success && proxyAttempts < corsProxies.length) {
             const prefix = corsProxies[currentProxyIndex];
-            // Determine fetch URL: encode entire raw URL for proxy usage, or use raw URL if no proxy
-            const fetchUrl = prefix
-                ? prefix + encodeURIComponent(targetUrlRaw)
-                : targetUrlRaw;
+            // Build fetch URL: encode only the base URL (up to '?'), leave the query string intact
+            let fetchUrl;
+            if (prefix) {
+                const [basePart, queryPart] = targetUrlRaw.split('?');
+                fetchUrl = prefix + encodeURIComponent(basePart) + (queryPart ? '?' + queryPart : '');
+            } else {
+                fetchUrl = targetUrlRaw;
+            }
 
             try {
                 console.log(`Fetching via CORS proxy ${currentProxyIndex + 1}: ${fetchUrl}`);
@@ -474,12 +478,12 @@ document.addEventListener('DOMContentLoaded', () => {
             hasMoreContent = true;
         }
 
+        // Build query params: if searching, only include wd; otherwise list + pagination + category
         let params;
         if (currentSearch) {
-            // Search mode: only include the search keyword
             params = { wd: currentSearch };
+            console.log(`Searching for term: ${currentSearch}`);
         } else {
-            // List mode: include action, page, and optional category
             params = { ac: 'list', pg: currentPage };
             if (currentCategory) {
                 params.t = currentCategory;
