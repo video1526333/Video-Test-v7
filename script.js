@@ -856,8 +856,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
             }
         }
-        // Show player modal
+        // Show player modal and enable wake lock
         videoPlayerModal.classList.add('open');
+        try {
+            noSleep.enable();
+            console.log('Wake Lock enabled');
+        } catch (e) {
+            console.warn('Wake Lock enable failed:', e);
+        }
 
         // Clean up any previous HLS instance
         if (hlsPlayer) { hlsPlayer.destroy(); hlsPlayer = null; }
@@ -927,7 +933,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
         };
-        // Also save position on pause
+        // Also save position on pause and disable wake lock
         videoPlayer.onpause = function () {
             if (currentVideoId && linkElement && linkElement.dataset.name) {
                 if (videoPlayer.currentTime > 5 && videoPlayer.currentTime < (videoPlayer.duration || Infinity) - 2) {
@@ -935,6 +941,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     console.log('[Resume Debug] Saving playback position (pause):', videoPlayer.currentTime);
                 }
             }
+            noSleep.disable();
+            console.log('Wake Lock disabled');
         };
         // Save position when modal closes (if applicable)
         if (videoPlayerModal) {
@@ -1091,6 +1099,8 @@ document.addEventListener('DOMContentLoaded', () => {
             url.searchParams.delete('video');
             window.history.pushState({}, 'Video Portal', url);
         }
+        // disable wake lock
+        try { noSleep.disable(); console.log('Wake Lock disabled'); } catch(e) {}
     });
 
     // Video player modal close
@@ -1104,6 +1114,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         videoPlayer.pause();
         if (hlsPlayer) { hlsPlayer.destroy(); hlsPlayer = null; }
+        // disable wake lock
+        try { noSleep.disable(); console.log('Wake Lock disabled'); } catch(e) {}
     });
 
     // Share button click
@@ -1537,5 +1549,8 @@ document.addEventListener('DOMContentLoaded', () => {
         dummyLink.dataset.name = ep.name;
         playM3u8Video(ep.url, dummyLink);
     }
+
+    // Wake Lock support for iOS: keep screen awake during playback
+    const noSleep = new NoSleep();
 
 }); 
