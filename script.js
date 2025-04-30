@@ -985,6 +985,9 @@ document.addEventListener('DOMContentLoaded', () => {
     function playM3u8Video(url, linkElement, retryCount = 0) {
         const MAX_RETRIES = 3;
         
+        // Reset fullscreen prevention flag for new video playback
+        window.preventAutoFullscreen = false;
+        
         // Add a global loading timeout to prevent hanging
         let loadingTimeout = setTimeout(() => {
             showToast('Video loading timed out. Please try again.', 'error');
@@ -1275,7 +1278,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                 document.mozFullScreenElement || 
                                 document.msFullscreenElement;
             
-            if (!isFullScreen) {
+            if (!isFullScreen && !window.preventAutoFullscreen) {
                 setTimeout(() => {
                     // Get the video container for better fullscreen experience
                     const videoContainer = document.querySelector('.video-player-container');
@@ -1283,6 +1286,19 @@ document.addEventListener('DOMContentLoaded', () => {
                 }, 500);
             }
         }, { once: true }); // Only trigger once per video load
+        
+        // Add listener to detect when user uses the native fullscreen button on the video
+        videoPlayer.addEventListener('fullscreenchange', function() {
+            // Mark that user has manually controlled fullscreen
+            window.preventAutoFullscreen = true;
+            console.log('User manually toggled fullscreen via player controls');
+        });
+        
+        // Additional listeners for different browser prefixes
+        videoPlayer.addEventListener('webkitfullscreenchange', function() {
+            window.preventAutoFullscreen = true;
+            console.log('User manually toggled fullscreen via player controls (webkit)');
+        });
         
         // Save playback position on timeupdate (only if >5s and not near end)
         videoPlayer.ontimeupdate = function () {
@@ -1350,6 +1366,12 @@ document.addEventListener('DOMContentLoaded', () => {
     function requestFullscreen(element) {
         try {
             if (element) {
+                // Check if we've marked the page to prevent auto-fullscreen
+                if (window.preventAutoFullscreen) {
+                    console.log('Auto fullscreen prevented by user preference');
+                    return false;
+                }
+                
                 if (isIOS()) {
                     // On iOS, we need to handle this differently
                     // Try the video element directly on iOS
@@ -1378,6 +1400,56 @@ document.addEventListener('DOMContentLoaded', () => {
             console.warn('Failed to enter fullscreen mode:', e);
         }
         return false;
+    }
+    
+    // Function to exit fullscreen with device-specific handling
+    function exitFullscreen() {
+        try {
+            if (document.exitFullscreen) {
+                document.exitFullscreen();
+            } else if (document.webkitExitFullscreen) { // Safari
+                document.webkitExitFullscreen();
+            } else if (document.mozCancelFullScreen) { // Firefox
+                document.mozCancelFullScreen();
+            } else if (document.msExitFullscreen) { // IE/Edge
+                document.msExitFullscreen();
+            }
+            
+            // Additional handling for iOS
+            if (isIOS()) {
+                const video = document.getElementById('videoPlayer');
+                if (video && video.webkitExitFullscreen) {
+                    video.webkitExitFullscreen();
+                }
+            }
+            console.log('Exited fullscreen mode');
+            return true;
+        } catch (e) {
+            console.warn('Failed to exit fullscreen mode:', e);
+        }
+        return false;
+    }
+    
+    // Track fullscreen state changes
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+    document.addEventListener('mozfullscreenchange', handleFullscreenChange);
+    document.addEventListener('MSFullscreenChange', handleFullscreenChange);
+    
+    // Handler for fullscreen change events
+    function handleFullscreenChange() {
+        const isFullscreen = document.fullscreenElement || 
+                            document.webkitFullscreenElement || 
+                            document.mozFullScreenElement || 
+                            document.msFullscreenElement;
+                            
+        console.log('Fullscreen state changed:', isFullscreen ? 'entered' : 'exited');
+        
+        // If user manually exited fullscreen, prevent auto re-entering
+        if (!isFullscreen) {
+            window.preventAutoFullscreen = true;
+            console.log('Auto fullscreen disabled by user action');
+        }
     }
 
     // --- Event Listeners ---
@@ -1548,8 +1620,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Video player modal close
     closeVideoPlayerButton.addEventListener('click', () => {
+        // First exit fullscreen if we're in it
+        const isFullscreen = document.fullscreenElement || 
+                           document.webkitFullscreenElement || 
+                           document.mozFullScreenElement || 
+                           document.msFullscreenElement;
+        
+        if (isFullscreen) {
+            exitFullscreen();
+        }
+        
+        // Then close the modal
         videoPlayerModal.classList.remove('open');
         updateBodyScrollLock();
+        
         // Stop the video and clean up resources
         videoPlayer.pause();
         
@@ -1571,6 +1655,9 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // disable wake lock
         try { noSleep.disable(); console.log('Wake Lock disabled'); } catch(e) {}
+        
+        // Reset the auto-fullscreen prevention flag when closing the player
+        window.preventAutoFullscreen = false;
     });
 
     // Share button click
