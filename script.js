@@ -1353,6 +1353,17 @@ document.addEventListener('DOMContentLoaded', () => {
         if (currentActive) currentActive.classList.remove('active');
         loadWatchList();
     });
+    // Header Watch List button for quick access
+    const headerWatchListBtn = document.getElementById('headerWatchListBtn');
+    if (headerWatchListBtn) {
+        headerWatchListBtn.addEventListener('click', () => {
+            const currentActive = categoryList.querySelector('.active');
+            if (currentActive) currentActive.classList.remove('active');
+            loadWatchList();
+            // Scroll to top for new view
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+    }
 
     // --- Restore initialize function ---
     async function initialize() {
