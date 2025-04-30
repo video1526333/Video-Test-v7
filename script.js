@@ -995,10 +995,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Hide sidebar on mobile after selecting a category
             if (window.innerWidth <= 768 && categoryNav.classList.contains('open')) {
-                if(categoryNav){
+                if (categoryNav) {
                     categoryNav.classList.remove('open');
                 }
-                
+
                 if (navToggle) navToggle.setAttribute('aria-expanded', 'false');
             }
         }
@@ -1014,11 +1014,15 @@ document.addEventListener('DOMContentLoaded', () => {
             if (currentActive) {
                 currentActive.classList.remove('active');
             }
-            // Only mark the 'All' category active if it exists
-            const allCategoryItem = categoryList.querySelector('li[data-id=""]');
-            if (allCategoryItem) {
-                allCategoryItem.classList.add('active');
+
+            if (categoryList) {
+                // Only mark the 'All' category active if it exists
+                const allCategoryItem = categoryList.querySelector('li[data-id=""]');
+                if (allCategoryItem) {
+                    allCategoryItem.classList.add('active');
+                }
             }
+
 
             loadVideos(1, '', searchTerm); // Load page 1, clear category, use search term
 
