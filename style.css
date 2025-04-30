@@ -512,18 +512,18 @@ nav ul li.active {
 }
 
 #videoPlayerModal .close-button {
-  position: absolute;
-  top: 5px;
-  right: 10px;
-  z-index: 2000;
-  background: rgba(0, 0, 0, 0.5);
-  color: white;
-  width: 30px;
-  height: 30px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  position: fixed !important;
+  top: 1rem !important;
+  right: 1rem !important;
+  z-index: 3000 !important;
+  background: rgba(0,0,0,0.5) !important;
+  color: var(--bw-text) !important;
+  width: 30px !important;
+  height: 30px !important;
+  border-radius: 50% !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
 }
 
 .modal-poster img {
