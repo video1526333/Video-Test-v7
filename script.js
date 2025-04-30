@@ -989,11 +989,24 @@ document.addEventListener('DOMContentLoaded', () => {
         let loadingTimeout = setTimeout(() => {
             showToast('Video loading timed out. Please try again.', 'error');
             if (hlsPlayer) {
-                hlsPlayer.destroy();
+                try {
+                    hlsPlayer.stopLoad();
+                    hlsPlayer.detachMedia();
+                    hlsPlayer.destroy();
+                } catch (e) {
+                    console.error('Error cleaning up HLS player:', e);
+                }
                 hlsPlayer = null;
             }
             // Don't close the modal here, just indicate the failure
         }, 15000); // 15 seconds timeout
+        
+        // Safety timeout to ensure page remains scrollable
+        let safetyTimeout = setTimeout(() => {
+            console.warn('Video safety timeout triggered');
+            // Don't close modal, but ensure page is scrollable
+            document.body.style.overflow = '';
+        }, 25000);
         
         // Reset active statuses
         const allLinks = modalEpisodes.querySelectorAll('a');
@@ -1025,13 +1038,24 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         // Clean up any previous HLS instance
-        if (hlsPlayer) { hlsPlayer.destroy(); hlsPlayer = null; }
+        if (hlsPlayer) { 
+            try {
+                hlsPlayer.stopLoad();
+                hlsPlayer.detachMedia();
+                hlsPlayer.destroy(); 
+            } catch (e) {
+                console.error('Error cleaning up existing HLS player:', e);
+            }
+            hlsPlayer = null; 
+        }
         videoPlayer.style.display = 'block';
 
         // Add error handling and retry logic
         const handleError = (error) => {
             console.error('Video loading error:', error);
             clearTimeout(loadingTimeout);
+            clearTimeout(safetyTimeout);
+            
             if (retryCount < MAX_RETRIES) {
                 showToast(`Video loading failed. Retrying... (${retryCount + 1}/${MAX_RETRIES})`, 'error', 2000);
                 setTimeout(() => {
@@ -1039,51 +1063,92 @@ document.addEventListener('DOMContentLoaded', () => {
                 }, 1500);
             } else {
                 showToast(`Failed to load video after ${MAX_RETRIES} attempts. Please try again later.`, 'error');
+                
+                // Show the recovery button after max retries
+                addScrollRecoveryButton();
             }
         };
 
         // Simplified HLS playback with error handling
         if (Hls.isSupported()) {
-            hlsPlayer = new Hls({
-                maxLoadingRetry: 4,
-                manifestLoadingTimeOut: 10000,
-                manifestLoadingMaxRetry: 4,
-                manifestLoadingRetryDelay: 500,
-                levelLoadingTimeOut: 10000,
-                levelLoadingMaxRetry: 4,
-                levelLoadingRetryDelay: 500,
-                fragLoadingTimeOut: 20000,
-                fragLoadingMaxRetry: 6
-            });
-            
-            hlsPlayer.on(Hls.Events.ERROR, function(event, data) {
-                if (data.fatal) {
-                    console.error('Fatal HLS error:', data.type, data.details);
-                    handleError(data);
-                }
-            });
-            
-            hlsPlayer.on(Hls.Events.MANIFEST_PARSED, function() {
-                clearTimeout(loadingTimeout);
-                console.log('HLS manifest loaded successfully');
-            });
+            try {
+                hlsPlayer = new Hls({
+                    debug: false,
+                    maxLoadingRetry: 4,
+                    manifestLoadingTimeOut: 10000,
+                    manifestLoadingMaxRetry: 4,
+                    manifestLoadingRetryDelay: 500,
+                    levelLoadingTimeOut: 10000,
+                    levelLoadingMaxRetry: 4,
+                    levelLoadingRetryDelay: 500,
+                    fragLoadingTimeOut: 20000,
+                    fragLoadingMaxRetry: 6,
+                    // Reduce quality to prevent freezing
+                    startLevel: -1, // Auto
+                    capLevelToPlayerSize: true,
+                    // More aggressive ABR algorithm
+                    abrEwmaDefaultEstimate: 500000, // 500kbps initial estimate
+                    abrBandWidthFactor: 0.8
+                });
+                
+                hlsPlayer.on(Hls.Events.ERROR, function(event, data) {
+                    console.warn('HLS error event:', event, data);
+                    
+                    if (data.fatal) {
+                        console.error('Fatal HLS error:', data.type, data.details);
+                        handleError(data);
+                    }
+                });
+                
+                hlsPlayer.on(Hls.Events.MANIFEST_PARSED, function() {
+                    clearTimeout(loadingTimeout);
+                    clearTimeout(safetyTimeout);
+                    console.log('HLS manifest loaded successfully');
+                });
+                
+                hlsPlayer.on(Hls.Events.MEDIA_ATTACHED, function() {
+                    console.log('HLS media attached successfully');
+                });
 
-            hlsPlayer.loadSource(url);
-            hlsPlayer.attachMedia(videoPlayer);
+                hlsPlayer.loadSource(url);
+                hlsPlayer.attachMedia(videoPlayer);
+                
+                // Check if media attachment succeeds within 5 seconds
+                const mediaAttachmentTimeout = setTimeout(() => {
+                    if (hlsPlayer && !hlsPlayer.media) {
+                        console.error('HLS media attachment timed out');
+                        handleError(new Error('Media attachment timeout'));
+                    }
+                }, 5000);
+                
+                // Clear the timeout when media is attached
+                hlsPlayer.on(Hls.Events.MEDIA_ATTACHED, function() {
+                    clearTimeout(mediaAttachmentTimeout);
+                });
+            } catch (e) {
+                console.error('Exception during HLS setup:', e);
+                handleError(e);
+            }
         } else {
             // Native HLS (Safari)
-            videoPlayer.src = url;
-            
-            // Add error listener for Safari
-            videoPlayer.addEventListener('error', function(e) {
-                console.error('Video error event:', videoPlayer.error);
-                handleError(videoPlayer.error);
-            }, { once: true });
-            
-            // Clear timeout on loadedmetadata for Safari
-            videoPlayer.addEventListener('loadedmetadata', function() {
-                clearTimeout(loadingTimeout);
-            }, { once: true });
+            try {
+                videoPlayer.src = url;
+                
+                // Add error listener for Safari
+                videoPlayer.addEventListener('error', function(e) {
+                    console.error('Video error event:', videoPlayer.error);
+                    handleError(videoPlayer.error);
+                }, { once: true });
+                
+                // Clear timeout on loadedmetadata for Safari
+                videoPlayer.addEventListener('loadedmetadata', function() {
+                    clearTimeout(loadingTimeout);
+                    clearTimeout(safetyTimeout);
+                }, { once: true });
+            } catch (e) {
+                console.error('Exception during native HLS setup:', e);
+                handleError(e);
+            }
         }
         
         // Restore playback position if available
@@ -1315,9 +1380,13 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Clean up any HLS resources if the modal with video player is closed
         if (hlsPlayer) {
-            hlsPlayer.stopLoad();
-            hlsPlayer.detachMedia();
-            hlsPlayer.destroy();
+            try {
+                hlsPlayer.stopLoad();
+                hlsPlayer.detachMedia();
+                hlsPlayer.destroy();
+            } catch (e) {
+                console.error('Error cleaning up HLS player:', e);
+            }
             hlsPlayer = null;
         }
         
@@ -1338,6 +1407,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         // disable wake lock
         try { noSleep.disable(); console.log('Wake Lock disabled'); } catch(e) {}
+        
+        // Extra check to make sure scroll is restored
+        document.body.style.overflow = '';
     });
 
     // Video player modal close
@@ -1349,9 +1421,13 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Properly destroy HLS player to avoid memory leaks
         if (hlsPlayer) { 
-            hlsPlayer.stopLoad();
-            hlsPlayer.detachMedia();
-            hlsPlayer.destroy(); 
+            try {
+                hlsPlayer.stopLoad();
+                hlsPlayer.detachMedia();
+                hlsPlayer.destroy(); 
+            } catch (e) {
+                console.error('Error cleaning up existing HLS player:', e);
+            }
             hlsPlayer = null; 
         }
         
@@ -1582,11 +1658,23 @@ document.addEventListener('DOMContentLoaded', () => {
             // First restore normal scroll state to ensure page is usable even if video loading fails
             document.body.style.overflow = '';
             
+            // Add the emergency scroll recovery button
+            addScrollRecoveryButton();
+            
+            // Set a global safety timeout
+            const safetyTimeout = setTimeout(() => {
+                console.warn('Safety timeout triggered - restoring scrolling');
+                ensureScrollable();
+            }, 20000); // 20 second safety timeout
+            
             // Delay loading the shared video to allow the page to render first
             showToast('Loading video...', 'info');
             setTimeout(() => {
                 showVideoDetails(videoId)
                     .then(success => {
+                        // Clear safety timeout if successful
+                        clearTimeout(safetyTimeout);
+                        
                         // If showVideoDetails resolved successfully, it will set scroll lock
                         if (!success) {
                             // If it returned false specifically, we need to restore scrolling
@@ -1595,6 +1683,9 @@ document.addEventListener('DOMContentLoaded', () => {
                         }
                     })
                     .catch(err => {
+                        // Clear safety timeout
+                        clearTimeout(safetyTimeout);
+                        
                         console.error('Error loading shared video:', err);
                         showToast('Failed to load video. Please try again.', 'error');
                         // Ensure scrolling is restored if there's an error
@@ -1878,5 +1969,71 @@ document.addEventListener('DOMContentLoaded', () => {
         updateBodyScrollLock();
       });
     }
+
+    // Add a global scroll recovery mechanism
+    function ensureScrollable() {
+        // Force enable scrolling regardless of modal state
+        document.body.style.overflow = '';
+        
+        // If any modals are open, close them
+        const openModals = document.querySelectorAll('.modal.open');
+        openModals.forEach(modal => {
+            modal.classList.remove('open');
+        });
+        
+        // Clean up any video resources
+        if (hlsPlayer) {
+            try {
+                hlsPlayer.stopLoad();
+                hlsPlayer.detachMedia();
+                hlsPlayer.destroy();
+            } catch (e) {
+                console.error('Error cleaning up HLS player:', e);
+            }
+            hlsPlayer = null;
+        }
+        
+        if (videoPlayer) {
+            videoPlayer.pause();
+            videoPlayer.removeAttribute('src');
+            videoPlayer.load();
+        }
+        
+        // Reset wake lock
+        try { 
+            noSleep.disable(); 
+        } catch(e) {
+            console.error('Error disabling wake lock:', e);
+        }
+        
+        showToast('Page reset - scrolling restored', 'info', 2000);
+    }
+
+    // Add scroll recovery button
+    function addScrollRecoveryButton() {
+        // Check if button already exists
+        if (document.getElementById('scrollRecoveryBtn')) {
+            return;
+        }
+        
+        const recoveryBtn = document.createElement('button');
+        recoveryBtn.id = 'scrollRecoveryBtn';
+        recoveryBtn.innerHTML = '🔓 Fix Scroll';
+        recoveryBtn.style.cssText = 'position: fixed; top: 10px; right: 10px; z-index: 9999; padding: 5px 10px; ' + 
+                                   'background: #ff4444; color: white; border: none; border-radius: 4px; ' +
+                                   'box-shadow: 0 2px 5px rgba(0,0,0,0.3); cursor: pointer;';
+        recoveryBtn.addEventListener('click', ensureScrollable);
+        document.body.appendChild(recoveryBtn);
+        
+        // Auto-hide after 10 seconds
+        setTimeout(() => {
+            if (recoveryBtn.parentNode) {
+                recoveryBtn.parentNode.removeChild(recoveryBtn);
+            }
+        }, 10000);
+    }
+
+    // Add this to window object for console access in emergencies
+    window.fixScroll = ensureScrollable;
 
 }); 
