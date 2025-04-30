@@ -1507,6 +1507,23 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    // Create Select Episode Modal for elderly-friendly episode selection
+    const selectModal = document.createElement('div');
+    selectModal.id = 'selectEpisodeModal';
+    selectModal.className = 'modal';
+    selectModal.innerHTML = `
+      <div class="modal-content select-episode-modal">
+        <span class="close-button">&times;</span>
+        <h3>Select Episode</h3>
+        <div id="selectEpisodeList" class="select-episode-list"></div>
+      </div>
+    `;
+    document.body.appendChild(selectModal);
+    const selectList = selectModal.querySelector('#selectEpisodeList');
+    selectModal.querySelector('.close-button').addEventListener('click', () => {
+      selectModal.classList.remove('open');
+    });
+
     // Create Select Episode button for direct episode selection
     const selectBtn = document.createElement('button');
     selectBtn.id = 'selectEpisodeBtn';
@@ -1514,13 +1531,19 @@ document.addEventListener('DOMContentLoaded', () => {
     selectBtn.style.cssText = 'font-size:1.2rem; padding:0.5rem 1rem; margin:0.5rem auto; display:block;';
     videoContent.appendChild(selectBtn);
     selectBtn.addEventListener('click', () => {
-        const input = prompt(`Enter episode number (1-${currentEpisodes.length}):`);
-        const num = parseInt(input, 10);
-        if (!isNaN(num) && num >= 1 && num <= currentEpisodes.length) {
-            playEpisode(num - 1);
-        } else {
-            showToast('Invalid episode number', 'error');
-        }
+        // Populate selectEpisode list
+        selectList.innerHTML = '';
+        currentEpisodes.forEach((ep, idx) => {
+          const btn = document.createElement('button');
+          btn.textContent = ep.name || `Episode ${idx + 1}`;
+          btn.style.cssText = 'font-size:1rem; padding:0.5rem;';
+          btn.addEventListener('click', () => {
+            selectModal.classList.remove('open');
+            playEpisode(idx);
+          });
+          selectList.appendChild(btn);
+        });
+        selectModal.classList.add('open');
     });
 
     /**
