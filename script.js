@@ -396,6 +396,10 @@ document.addEventListener('DOMContentLoaded', () => {
             const allLi = document.createElement('li');
             allLi.textContent = 'All';
             allLi.dataset.id = '';
+            // Only mark as active if defaultCategoryId is empty string
+            if (defaultCategoryId === '') {
+                allLi.classList.add('active');
+            }
             categoryList.appendChild(allLi);
         }
 
@@ -423,6 +427,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const watchLi = document.createElement('li');
         watchLi.textContent = 'Watch List';
         watchLi.dataset.id = 'watchlist';
+        // Mark watchlist active if defaultCategoryId corresponds
+        if (defaultCategoryId === 'watchlist') {
+            watchLi.classList.add('active');
+        }
         categoryList.appendChild(watchLi);
     }
 
@@ -995,7 +1003,11 @@ document.addEventListener('DOMContentLoaded', () => {
             if (currentActive) {
                 currentActive.classList.remove('active');
             }
-            categoryList.querySelector('li[data-id=""]').classList.add('active');
+            // Only mark the 'All' category active if it exists
+            const allCategoryItem = categoryList.querySelector('li[data-id=""]');
+            if (allCategoryItem) {
+                allCategoryItem.classList.add('active');
+            }
 
             loadVideos(1, '', searchTerm); // Load page 1, clear category, use search term
 
