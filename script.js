@@ -474,18 +474,16 @@ document.addEventListener('DOMContentLoaded', () => {
             hasMoreContent = true;
         }
 
-        const params = { ac: 'list', pg: currentPage };
-
-        // Only add category if it's not empty
-        if (currentCategory) {
-            params.t = currentCategory;
-        }
-
-        // Only add search term if it's not empty
+        let params;
         if (currentSearch) {
-            // Use raw searchTerm; URLSearchParams will handle encoding
-            params.wd = currentSearch;
-            console.log(`Searching for term: ${currentSearch}`);
+            // Search mode: only include the search keyword
+            params = { wd: currentSearch };
+        } else {
+            // List mode: include action, page, and optional category
+            params = { ac: 'list', pg: currentPage };
+            if (currentCategory) {
+                params.t = currentCategory;
+            }
         }
 
         // Show info to user
