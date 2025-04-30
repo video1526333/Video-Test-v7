@@ -1482,6 +1482,32 @@ document.addEventListener('DOMContentLoaded', () => {
     const videoContent = videoPlayerModal.querySelector('.video-modal-content');
     videoContent.appendChild(episodeControls);
     videoContent.appendChild(ctrlContainer);
+    // Insert Select Episode button right below prev/next controls
+    const selectBtn = document.createElement('button');
+    selectBtn.id = 'selectEpisodeBtn';
+    selectBtn.textContent = '选择剧集';
+    selectBtn.style.cssText = 'font-size:1.2rem; padding:0.5rem 1rem; margin:0.5rem auto; display:block;';
+    videoContent.appendChild(selectBtn);
+    selectBtn.addEventListener('click', () => {
+        // Ensure episodes have been loaded
+        if (!currentEpisodes || currentEpisodes.length === 0) {
+            showToast('当前没有可选剧集', 'info');
+            return;
+        }
+        // Populate selectEpisode list
+        selectList.innerHTML = '';
+        currentEpisodes.forEach((ep, idx) => {
+            const btn = document.createElement('button');
+            btn.textContent = ep.name || `Episode ${idx + 1}`;
+            btn.style.cssText = 'font-size:1rem; padding:0.5rem;';
+            btn.addEventListener('click', () => {
+                selectModal.classList.remove('open');
+                playEpisode(idx);
+            });
+            selectList.appendChild(btn);
+        });
+        selectModal.classList.add('open');
+    });
 
     // Create Watch List Toggle button once (only here)
     const watchListBtn = document.createElement('button');
@@ -1536,33 +1562,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const selectList = selectModal.querySelector('#selectEpisodeList');
     selectModal.querySelector('.close-button').addEventListener('click', () => {
       selectModal.classList.remove('open');
-    });
-
-    // Create Select Episode button for direct episode selection
-    const selectBtn = document.createElement('button');
-    selectBtn.id = 'selectEpisodeBtn';
-    selectBtn.textContent = '选择剧集';
-    selectBtn.style.cssText = 'font-size:1.2rem; padding:0.5rem 1rem; margin:0.5rem auto; display:block;';
-    videoContent.appendChild(selectBtn);
-    selectBtn.addEventListener('click', () => {
-        // Ensure episodes have been loaded
-        if (!currentEpisodes || currentEpisodes.length === 0) {
-          showToast('当前没有可选剧集', 'info');
-          return;
-        }
-        // Populate selectEpisode list
-        selectList.innerHTML = '';
-        currentEpisodes.forEach((ep, idx) => {
-          const btn = document.createElement('button');
-          btn.textContent = ep.name || `Episode ${idx + 1}`;
-          btn.style.cssText = 'font-size:1rem; padding:0.5rem;';
-          btn.addEventListener('click', () => {
-            selectModal.classList.remove('open');
-            playEpisode(idx);
-          });
-          selectList.appendChild(btn);
-        });
-        selectModal.classList.add('open');
     });
 
     /**
