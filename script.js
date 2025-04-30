@@ -874,7 +874,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             
             // Prevent background scroll
-            updateBodyScrollLock();
+            document.body.style.overflow = 'hidden';
             
             // Prevent scroll propagation from modal-content to background
             const modalContent = modal.querySelector('.modal-content');
@@ -899,6 +899,7 @@ document.addEventListener('DOMContentLoaded', () => {
             showToast('Failed to load video details. Please try again.', 'error');
             
             // Ensure scrolling is restored
+            document.body.style.overflow = '';
             updateBodyScrollLock();
             
             return false; // Signal failure
@@ -1004,7 +1005,7 @@ document.addEventListener('DOMContentLoaded', () => {
         let safetyTimeout = setTimeout(() => {
             console.warn('Video safety timeout triggered');
             // Don't close modal, but ensure page is scrollable
-            document.body.classList.remove('modal-open');
+            document.body.style.overflow = '';
         }, 25000);
         
         // Reset active statuses
@@ -1312,15 +1313,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Scroll Lock Helper ---
     function updateBodyScrollLock() {
-        // Check if any modal is open
-        const anyModalOpen = document.querySelector('.modal.open');
+        // Remove the scroll locking behavior - always allow scrolling
+        document.body.style.overflow = '';
         
-        if (anyModalOpen) {
-            // Lock body scroll when a modal is open
-            document.body.classList.add('modal-open');
-        } else {
-            // Restore scrolling when no modals are open
-            document.body.classList.remove('modal-open');
+        // Keep the backup check to make sure scrolling is never locked
+        if (document.body.style.overflow === 'hidden') {
+            document.body.style.overflow = '';
         }
     }
 
@@ -1485,6 +1483,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         // disable wake lock
         try { noSleep.disable(); console.log('Wake Lock disabled'); } catch(e) {}
+        
+        // Extra check to make sure scroll is restored
+        document.body.style.overflow = '';
     });
 
     // Video player modal close
@@ -1509,6 +1510,9 @@ document.addEventListener('DOMContentLoaded', () => {
         // Clear video src to free memory
         videoPlayer.removeAttribute('src');
         videoPlayer.load();
+        
+        // disable wake lock
+        try { noSleep.disable(); console.log('Wake Lock disabled'); } catch(e) {}
     });
 
     // Share button click
