@@ -1,12 +1,12 @@
 /* Minimalist Dark Mode & Tablet-Friendly Layout */
 :root {
-  --bg: #ffffff;
-  --surface: #23232b;
-  --surface-light: #f3f3f3;
-  --text: #000000;
-  --text-muted: #555555;
-  --accent: #0078d7;
-  --border: #cccccc;
+  --bg: #000000;
+  --surface: #111111;
+  --surface-light: #222222;
+  --text: #ffffff;
+  --text-muted: #888888;
+  --accent: #ffffff;
+  --border: #444444;
 }
 
 * {
@@ -16,8 +16,8 @@
 }
 
 body {
-  background: #f0f0f0 !important;
-  color: #000000 !important;
+  background: var(--bg) !important;
+  color: var(--text) !important;
   font-family: Arial, sans-serif !important;
   margin: 0;
   padding: 0;
@@ -27,7 +27,7 @@ body {
   max-width: 1100px;
   margin: 2.5rem auto 0 auto;
   padding: 1rem !important;
-  background: #ffffff !important;
+  background: var(--surface) !important;
   border-radius: 16px;
   box-shadow: none !important;
 }
@@ -37,16 +37,16 @@ header {
   justify-content: space-between;
   align-items: center;
   padding: 1.25rem 2rem 1.25rem 2rem;
-  background: var(--accent) !important;
+  background: var(--surface-light) !important;
   border-radius: 16px 16px 0 0;
   box-shadow: 0 2px 16px 0 rgba(0, 0, 0, 0.11);
   margin-bottom: 1.5rem;
-  color: #ffffff !important;
+  color: var(--text) !important;
 }
 
 header h1 {
   font-size: 2.5rem !important;
-  color: #ffffff !important;
+  color: var(--text) !important;
   letter-spacing: 1px;
   font-weight: 700;
   margin-right: 2rem;
@@ -57,7 +57,7 @@ header h1 {
   display: flex;
   align-items: center;
   gap: 0.7rem;
-  background: #ffffff !important;
+  background: var(--surface) !important;
   padding: 0.5rem !important;
   border-radius: 8px;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.07);
@@ -65,9 +65,9 @@ header h1 {
 
 #searchInput {
   padding: 0.5rem 1rem;
-  border: 1px solid #cccccc !important;
-  background: #f3f3f3 !important;
-  color: #000000 !important;
+  border: 1px solid var(--border) !important;
+  background: var(--surface-light) !important;
+  color: var(--text) !important;
   font-size: 1.2rem;
   border-radius: 6px;
   width: 300px;
@@ -87,7 +87,7 @@ header h1 {
 .search-container button {
   padding: 0.75rem 1.25rem;
   background: var(--border) !important;
-  color: #ffffff !important;
+  color: var(--text) !important;
   border: none !important;
   border-radius: 6px;
   font-size: 1.2rem;
@@ -97,11 +97,11 @@ header h1 {
 }
 
 .search-container button:hover {
-  background: #c2a6ff;
+  background: var(--surface-light) !important;
 }
 
 #searchButton:hover {
-  background: #a370dd;
+  background: var(--surface-light) !important;
   transform: translateY(-2px);
 }
 
@@ -1086,17 +1086,17 @@ html {
 }
 
 body {
-  background: #ffffff !important;
-  color: #000000 !important;
+  background: var(--bg) !important;
+  color: var(--text) !important;
 }
 
 :root {
-  --bg: #ffffff !important;
-  --surface-light: #f3f3f3 !important;
-  --text: #000000 !important;
-  --text-muted: #555555 !important;
-  --accent: #0078d7 !important;
-  --border: #cccccc !important;
+  --bg: #000000 !important;
+  --surface-light: #222222 !important;
+  --text: #ffffff !important;
+  --text-muted: #888888 !important;
+  --accent: #ffffff !important;
+  --border: #444444 !important;
 }
 
 * {
@@ -1161,4 +1161,134 @@ button {
 #prevEpisode:hover:enabled,
 #nextEpisode:hover:enabled {
   background: #005fa3 !important;
+}
+
+/* Black & White Theme Overrides */
+body {
+  background: var(--bg) !important;
+  color: var(--text) !important;
+}
+.container {
+  background: var(--surface) !important;
+}
+header {
+  background: var(--surface-light) !important;
+  color: var(--text) !important;
+}
+.search-container,
+button,
+#searchButton,
+.search-container button,
+.nav-toggle,
+.share-button {
+  background: var(--surface) !important;
+  color: var(--text) !important;
+  border-color: var(--border) !important;
+}
+.search-container button:hover,
+button:hover,
+#searchButton:hover {
+  background: var(--surface-light) !important;
+}
+#searchInput,
+input,
+textarea {
+  background: var(--surface-light) !important;
+  color: var(--text) !important;
+  border-color: var(--border) !important;
+}
+
+/* Monochrome Theme Overrides: Black backgrounds and white text only */
+:root {
+  --bw-bg: #000000;
+  --bw-surface: #111111;
+  --bw-surface-light: #222222;
+  --bw-text: #ffffff;
+  --bw-border: #333333;
+}
+
+body {
+  background: var(--bw-bg) !important;
+  color: var(--bw-text) !important;
+}
+
+/* Core container elements */
+.container,
+header,
+nav,
+main,
+.modal,
+.modal-content,
+.video-player-container,
+.share-modal,
+.settings-modal,
+.watch-history-modal,
+.bottom-nav {
+  background: var(--bw-surface) !important;
+  color: var(--bw-text) !important;
+  border: none !important;
+}
+
+/* Form controls and buttons */
+button,
+input,
+textarea,
+#searchInput,
+#searchButton,
+#pagination button,
+#backToTop,
+.bottom-nav-button,
+.video-card,
+.video-card .card-actions button {
+  background: var(--bw-surface-light) !important;
+  color: var(--bw-text) !important;
+  border: 1px solid var(--bw-border) !important;
+}
+
+/* Hover states */
+button:hover,
+#searchButton:hover,
+#pagination button:hover:not(:disabled),
+.video-card:hover,
+.video-card .card-actions button:hover,
+#backToTop:hover,
+.bottom-nav-button:hover,
+#categoryList li:hover {
+  background: var(--bw-surface) !important;
+}
+
+/* Video card specifics */
+.video-card {
+  background: var(--bw-surface-light) !important;
+  border: 1px solid var(--bw-border) !important;
+  color: var(--bw-text) !important;
+}
+
+/* Category list items */
+#categoryList li {
+  background: var(--bw-surface) !important;
+  color: var(--bw-text) !important;
+  border-bottom: 1px solid var(--bw-border) !important;
+}
+#categoryList li.active {
+  background: var(--bw-surface-light) !important;
+}
+
+/* Toast notifications */
+#toastContainer .toast {
+  background: var(--bw-surface-light) !important;
+  color: var(--bw-text) !important;
+  border-left: 4px solid var(--bw-border) !important;
+}
+
+/* Episode links */
+#modalEpisodes a,
+.modal-episodes a {
+  background: transparent !important;
+  color: var(--bw-text) !important;
+  border: none !important;
+}
+#modalEpisodes a:hover,
+.modal-episodes a:hover {
+  text-decoration: underline !important;
 }
