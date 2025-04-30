@@ -1313,12 +1313,24 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Scroll Lock Helper ---
     function updateBodyScrollLock() {
-        // Remove the scroll locking behavior - always allow scrolling
-        document.body.style.overflow = '';
+        // Check if any modal is open
+        const anyModalOpen = document.querySelector('.modal.open');
         
-        // Keep the backup check to make sure scrolling is never locked
-        if (document.body.style.overflow === 'hidden') {
+        if (anyModalOpen) {
+            // Lock body scroll when a modal is open
+            document.body.style.overflow = 'hidden';
+            
+            // Store the current scroll position
+            document.body.dataset.scrollY = window.scrollY;
+        } else {
+            // Restore scrolling when no modals are open
             document.body.style.overflow = '';
+            
+            // Restore scroll position if it was saved
+            if (document.body.dataset.scrollY) {
+                window.scrollTo(0, parseInt(document.body.dataset.scrollY || '0'));
+                delete document.body.dataset.scrollY;
+            }
         }
     }
 
