@@ -227,11 +227,10 @@ header h1 {
 
 #categoryNav ul li.active,
 #categoryNav ul li[class~="active"] {
-  background: var(--accent) !important;
-  color: #ffffff !important;
-  border: 1.5px solid var(--accent);
-  font-weight: 600;
-  box-shadow: 0 2px 8px 0 rgba(174, 140, 255, 0.11);
+  background: var(--bw-bg) !important;
+  color: var(--bw-text) !important;
+  border-color: var(--bw-bg) !important;
+  box-shadow: none !important;
 }
 
 #categoryNav ul li:hover:not(.active) {
