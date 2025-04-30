@@ -36,7 +36,7 @@ header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 1.25rem 2rem 1.25rem 2rem;
+  padding: 0px;
   background: var(--surface-light) !important;
   border-radius: 16px 16px 0 0;
   box-shadow: 0 2px 16px 0 rgba(0, 0, 0, 0.11);
