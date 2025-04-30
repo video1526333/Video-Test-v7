@@ -1617,4 +1617,23 @@ document.addEventListener('DOMContentLoaded', () => {
     // Wake Lock support for iOS: keep screen awake during playback
     const noSleep = new NoSleep();
 
+    // Static nav items for Settings and Watch History
+    const settingsNav = document.getElementById('settingsNav');
+    if (settingsNav) {
+      settingsNav.addEventListener('click', e => {
+        e.stopPropagation();
+        settingsModal.classList.add('open');
+        updateBodyScrollLock();
+      });
+    }
+    const historyNav = document.getElementById('historyNav');
+    if (historyNav) {
+      historyNav.addEventListener('click', e => {
+        e.stopPropagation();
+        renderWatchHistory();
+        watchHistoryModal.classList.add('open');
+        updateBodyScrollLock();
+      });
+    }
+
 }); 

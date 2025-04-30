@@ -1379,3 +1379,18 @@ button:hover,
   background: transparent !important;
   color: var(--bw-text) !important;
 }
+
+/* Override display for non-video modals when open */
+#settingsModal.modal.open,
+#shareModal.modal.open,
+#watchHistoryModal.modal.open {
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+}
+/* Also allow modal-content inside these modals to show */
+#settingsModal.modal.open .modal-content,
+#shareModal.modal.open .modal-content,
+#watchHistoryModal.modal.open .modal-content {
+  display: block !important;
+}
