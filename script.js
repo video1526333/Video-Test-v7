@@ -1015,34 +1015,31 @@ document.addEventListener('DOMContentLoaded', () => {
     // Video card click
     videoGrid.addEventListener('click', (event) => {
         const card = event.target.closest('.video-card');
-        if (card) {
-            const videoId = card.dataset.id;
-            (async () => {
-                try {
-                    const data = await fetchData({ ac: 'detail', ids: videoId });
-                    if (data && data.list && data.list.length > 0) {
-                        const video = data.list[0];
-                        const playSources = video.vod_play_url.split('#');
-                        if (playSources.length > 0) {
-                            const firstSource = playSources[0].split('$');
-                            const url = firstSource[1];
-                            if (url) {
-                                playM3u8Video(url);
-                            } else {
-                                showToast('No playable source available', 'info');
-                            }
-                        } else {
-                            showToast('No playback sources available', 'info');
-                        }
-                    } else {
-                        showToast('Failed to load video details.', 'error');
-                    }
-                } catch (err) {
-                    console.error(err);
-                    showToast('Error loading video.', 'error');
+        if (!card) return;
+        const videoId = card.dataset.id;
+        (async () => {
+            try {
+                const data = await fetchData({ ac: 'detail', ids: videoId });
+                if (!data || !data.list || data.list.length === 0) {
+                    showToast('Failed to load video details.', 'error');
+                    return;
                 }
-            })();
-        }
+                // Parse episodes
+                currentEpisodes = data.list[0].vod_play_url.split('#')
+                    .map(src => { const [name, url] = src.split('$'); return { name: name || 'Episode', url }; });
+                if (currentEpisodes.length === 0) {
+                    showToast('No episodes available.', 'info');
+                    return;
+                }
+                // Play first
+                playEpisode(0);
+                videoPlayerModal.classList.add('open');
+                updateBodyScrollLock();
+            } catch (err) {
+                console.error(err);
+                showToast('Error loading video.', 'error');
+            }
+        })();
     });
 
     // Modal close
@@ -1385,6 +1382,44 @@ document.addEventListener('DOMContentLoaded', () => {
                     console.log('ServiceWorker registration failed: ', err);
                 });
         });
+    }
+
+    // Episode navigation support for elderly
+    let currentEpisodes = [];
+    let currentEpisodeIndex = 0;
+    const episodeControls = document.createElement('div');
+    episodeControls.id = 'episodeControls';
+    episodeControls.style.cssText = 'font-size:1.2rem; margin:0.5rem; text-align:center; color:#000';
+    const prevBtn = document.createElement('button');
+    prevBtn.id = 'prevEpisode'; prevBtn.textContent = 'Previous'; prevBtn.disabled = true;
+    prevBtn.style.cssText = 'font-size:1.2rem; padding:0.5rem 1rem;';
+    const nextBtn = document.createElement('button');
+    nextBtn.id = 'nextEpisode'; nextBtn.textContent = 'Next'; nextBtn.disabled = true;
+    nextBtn.style.cssText = 'font-size:1.2rem; padding:0.5rem 1rem;';
+    const ctrlContainer = document.createElement('div');
+    ctrlContainer.style.cssText = 'display:flex; justify-content:center; gap:1rem;';
+    ctrlContainer.appendChild(prevBtn);
+    ctrlContainer.appendChild(nextBtn);
+    // Insert controls into video player modal
+    const videoContent = videoPlayerModal.querySelector('.video-modal-content');
+    videoContent.appendChild(episodeControls);
+    videoContent.appendChild(ctrlContainer);
+    // Handlers for prev/next
+    prevBtn.addEventListener('click', () => playEpisode(currentEpisodeIndex - 1));
+    nextBtn.addEventListener('click', () => playEpisode(currentEpisodeIndex + 1));
+
+    /**
+     * Play an episode by index and update controls
+     */
+    function playEpisode(index) {
+        if (index < 0 || index >= currentEpisodes.length) return;
+        currentEpisodeIndex = index;
+        const ep = currentEpisodes[index];
+        playingTitle.textContent = `Episode ${index + 1}: ${ep.name}`;
+        episodeControls.textContent = `Episode ${index + 1} of ${currentEpisodes.length}`;
+        prevBtn.disabled = (index === 0);
+        nextBtn.disabled = (index === currentEpisodes.length - 1);
+        playM3u8Video(ep.url);
     }
 
 }); 
