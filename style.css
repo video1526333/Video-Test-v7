@@ -725,7 +725,7 @@ nav ul li.active {
 }
 
 .search-container {
-  margin-top: 0.5rem;
+  margin-top: 0;
   width: 100%;
   justify-content: stretch;
   gap: 0.5rem;
