@@ -995,7 +995,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Hide sidebar on mobile after selecting a category
             if (window.innerWidth <= 768 && categoryNav.classList.contains('open')) {
-                categoryNav.classList.remove('open');
+                if(categoryNav){
+                    categoryNav.classList.remove('open');
+                }
+                
                 if (navToggle) navToggle.setAttribute('aria-expanded', 'false');
             }
         }
