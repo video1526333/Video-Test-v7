@@ -1186,28 +1186,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 console.log('[Resume Debug] play() called after setting currentTime.');
                 // Restore mute state after playback starts
                 setTimeout(() => { videoPlayer.muted = wasMuted; }, 200);
-                
-                // Request fullscreen mode with a slight delay to ensure it works across browsers
-                setTimeout(() => {
-                    try {
-                        // Get the video container for better fullscreen experience
-                        const videoContainer = document.querySelector('.video-player-container');
-                        
-                        // Try the standard fullscreen API and various browser-specific versions
-                        if (videoContainer.requestFullscreen) {
-                            videoContainer.requestFullscreen();
-                        } else if (videoContainer.webkitRequestFullscreen) { // Safari
-                            videoContainer.webkitRequestFullscreen();
-                        } else if (videoContainer.mozRequestFullscreen) { // Firefox
-                            videoContainer.mozRequestFullscreen();
-                        } else if (videoContainer.msRequestFullscreen) { // IE/Edge
-                            videoContainer.msRequestFullscreen();
-                        }
-                        console.log('Requested fullscreen mode for autoplay video');
-                    } catch (e) {
-                        console.warn('Failed to enter fullscreen mode:', e);
-                    }
-                }, 300); // Short delay to ensure video has started playing
             }).catch(e => {
                 console.error('[Resume Debug] Playback error (autoplay?):', e);
                 // Try to restore mute state anyway
