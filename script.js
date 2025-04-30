@@ -441,6 +441,25 @@ document.addEventListener('DOMContentLoaded', () => {
             watchLi.classList.add('active');
         }
         categoryList.appendChild(watchLi);
+        // Add Settings navigation item
+        const settingsLi = document.createElement('li');
+        settingsLi.textContent = '设置';
+        settingsLi.id = 'settingsNav';
+        categoryList.appendChild(settingsLi);
+        settingsLi.addEventListener('click', () => {
+          settingsModal.classList.add('open');
+          updateBodyScrollLock();
+        });
+        // Add Watch History navigation item
+        const historyLi = document.createElement('li');
+        historyLi.textContent = '观看历史';
+        historyLi.id = 'historyNav';
+        categoryList.appendChild(historyLi);
+        historyLi.addEventListener('click', () => {
+          renderWatchHistory();
+          watchHistoryModal.classList.add('open');
+          updateBodyScrollLock();
+        });
     }
 
     // Function to handle image URLs more robustly
