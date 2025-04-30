@@ -1495,6 +1495,22 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    // Create Select Episode button for direct episode selection
+    const selectBtn = document.createElement('button');
+    selectBtn.id = 'selectEpisodeBtn';
+    selectBtn.textContent = 'Select Episode';
+    selectBtn.style.cssText = 'font-size:1.2rem; padding:0.5rem 1rem; margin:0.5rem auto; display:block;';
+    videoContent.appendChild(selectBtn);
+    selectBtn.addEventListener('click', () => {
+        const input = prompt(`Enter episode number (1-${currentEpisodes.length}):`);
+        const num = parseInt(input, 10);
+        if (!isNaN(num) && num >= 1 && num <= currentEpisodes.length) {
+            playEpisode(num - 1);
+        } else {
+            showToast('Invalid episode number', 'error');
+        }
+    });
+
     /**
      * Play an episode by index and update controls
      */
