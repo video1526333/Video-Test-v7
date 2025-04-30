@@ -184,16 +184,6 @@ header h1 {
   background: #a370dd;
 }
 
-/* Hide category nav by default - will be shown when password is correct */
-#categoryNav {
-  display: block !important;
-  background: #ffffff !important;
-  padding: 0.5rem !important;
-}
-
-#categoryNav.visible {
-  display: block;
-}
 
 /* Category navigation bar: pill-style tabs, modern look */
 /* Force categories to single line with horizontal scroll */
