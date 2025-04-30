@@ -1186,6 +1186,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 console.log('[Resume Debug] play() called after setting currentTime.');
                 // Restore mute state after playback starts
                 setTimeout(() => { videoPlayer.muted = wasMuted; }, 200);
+                
+                // Request fullscreen mode with a slight delay to ensure it works across browsers
+                setTimeout(() => {
+                    // Get the video container for better fullscreen experience
+                    const videoContainer = document.querySelector('.video-player-container');
+                    requestFullscreen(videoContainer);
+                }, 300); // Short delay to ensure video has started playing
             }).catch(e => {
                 console.error('[Resume Debug] Playback error (autoplay?):', e);
                 // Try to restore mute state anyway
@@ -1233,24 +1240,9 @@ document.addEventListener('DOMContentLoaded', () => {
                         
                         // Request fullscreen mode with a slight delay to ensure it works across browsers
                         setTimeout(() => {
-                            try {
-                                // Get the video container for better fullscreen experience
-                                const videoContainer = document.querySelector('.video-player-container');
-                                
-                                // Try the standard fullscreen API and various browser-specific versions
-                                if (videoContainer.requestFullscreen) {
-                                    videoContainer.requestFullscreen();
-                                } else if (videoContainer.webkitRequestFullscreen) { // Safari
-                                    videoContainer.webkitRequestFullscreen();
-                                } else if (videoContainer.mozRequestFullscreen) { // Firefox
-                                    videoContainer.mozRequestFullscreen();
-                                } else if (videoContainer.msRequestFullscreen) { // IE/Edge
-                                    videoContainer.msRequestFullscreen();
-                                }
-                                console.log('Requested fullscreen mode');
-                            } catch (e) {
-                                console.warn('Failed to enter fullscreen mode:', e);
-                            }
+                            // Get the video container for better fullscreen experience
+                            const videoContainer = document.querySelector('.video-player-container');
+                            requestFullscreen(videoContainer);
                         }, 300); // Short delay to ensure video has started playing
                     })
                     .catch(err => {
@@ -1274,6 +1266,24 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             videoPlayer.addEventListener('loadedmetadata', setResumeTime, { once: true });
         }
+        
+        // Add a playing event listener to ensure fullscreen when video starts playing through any means
+        videoPlayer.addEventListener('playing', function() {
+            // Check if we're already in fullscreen
+            const isFullScreen = document.fullscreenElement || 
+                                document.webkitFullscreenElement || 
+                                document.mozFullScreenElement || 
+                                document.msFullscreenElement;
+            
+            if (!isFullScreen) {
+                setTimeout(() => {
+                    // Get the video container for better fullscreen experience
+                    const videoContainer = document.querySelector('.video-player-container');
+                    requestFullscreen(videoContainer);
+                }, 500);
+            }
+        }, { once: true }); // Only trigger once per video load
+        
         // Save playback position on timeupdate (only if >5s and not near end)
         videoPlayer.ontimeupdate = function () {
             if (currentVideoId && linkElement && linkElement.dataset.name) {
@@ -1320,6 +1330,54 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!anyOpen && document.body.style.overflow === 'hidden') {
             document.body.style.overflow = '';
         }
+    }
+
+    // Function to detect iOS devices
+    function isIOS() {
+        return [
+            'iPad Simulator',
+            'iPhone Simulator',
+            'iPod Simulator',
+            'iPad',
+            'iPhone',
+            'iPod'
+        ].includes(navigator.platform)
+        // iOS 13+ detection
+        || (navigator.userAgent.includes("Mac") && "ontouchend" in document);
+    }
+
+    // Function to request fullscreen with device-specific handling
+    function requestFullscreen(element) {
+        try {
+            if (element) {
+                if (isIOS()) {
+                    // On iOS, we need to handle this differently
+                    // Try the video element directly on iOS
+                    const video = document.getElementById('videoPlayer');
+                    if (video && video.webkitEnterFullscreen) {
+                        video.webkitEnterFullscreen();
+                        console.log('Requested iOS-specific fullscreen mode');
+                        return true;
+                    }
+                }
+                
+                // Standard approach for other browsers
+                if (element.requestFullscreen) {
+                    element.requestFullscreen();
+                } else if (element.webkitRequestFullscreen) { // Safari
+                    element.webkitRequestFullscreen();
+                } else if (element.mozRequestFullscreen) { // Firefox
+                    element.mozRequestFullscreen();
+                } else if (element.msRequestFullscreen) { // IE/Edge
+                    element.msRequestFullscreen();
+                }
+                console.log('Requested fullscreen mode');
+                return true;
+            }
+        } catch (e) {
+            console.warn('Failed to enter fullscreen mode:', e);
+        }
+        return false;
     }
 
     // --- Event Listeners ---
