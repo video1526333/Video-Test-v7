@@ -22,11 +22,11 @@
 
     <div class="container">
         <header>
-            <button id="headerWatchListBtn" class="header-btn">Watch List</button>
+            <button id="headerWatchListBtn" class="header-btn">观看列表</button>
             <div class="search-container">
                 <!-- Hamburger menu removed for simplicity -->
                 <input type="text" id="searchInput" placeholder="Search videos" value="粤语">
-                <button id="searchButton">Search</button>
+                <button id="searchButton">搜索</button>
                 <button id="settingsButton" class="settings-button">⚙️</button>
             </div>
         </header>
@@ -56,8 +56,8 @@
             </div>
             <div class="modal-info">
                 <h2 id="modalTitle">Video Title</h2>
-                <button id="shareButton" class="share-button">Share</button>
-                <button id="addToWatchListButton" class="watchlist-button">Add to Watch List</button>
+                <button id="shareButton" class="share-button">分享</button>
+                <button id="addToWatchListButton" class="watchlist-button">添加到观看列表</button>
                 <p><strong>Year:</strong> <span id="modalYear"></span></p>
                 <p><strong>Area:</strong> <span id="modalArea"></span></p>
                 <p><strong>Language:</strong> <span id="modalLang"></span></p>
@@ -98,7 +98,7 @@
             <h3 id="shareModalTitle">Share Video</h3>
             <div class="share-content">
                 <input type="text" id="shareLink" readonly>
-                <button id="copyLinkButton">Copy Link</button>
+                <button id="copyLinkButton">复制链接</button>
             </div>
         </div>
     </div>
@@ -114,14 +114,14 @@
             <div class="settings-form">
                 <label for="passwordInput">Enter Password:</label>
                 <input type="password" id="passwordInput" placeholder="Password">
-                <button id="submitPassword">Submit</button>
+                <button id="submitPassword">提交</button>
                 <p id="passwordMessage"></p>
 
                 <!-- Export/Import All User Data -->
                 <div class="userdata-import-export" style="margin-top:1rem;">
-                    <button id="exportAllUserDataButton">Export All Data</button>
+                    <button id="exportAllUserDataButton">导出全部数据</button>
                     <input type="file" id="importAllUserDataInput" accept=".json" style="display:none;">
-                    <button id="importAllUserDataButton">Import All Data</button>
+                    <button id="importAllUserDataButton">导入全部数据</button>
                 </div>
             </div>
         </div>
@@ -129,8 +129,8 @@
 
     <!-- Add bottom navigation bar for mobile watch list -->
     <div class="bottom-nav">
-        <button id="watchHistoryButton" class="bottom-nav-button" style="float:left;">&#128340; Watch History</button>
-        <button id="mobileWatchListButton" class="bottom-nav-button">Watch List</button>
+        <button id="watchHistoryButton" class="bottom-nav-button" style="float:left;">&#128340; 观看历史</button>
+        <button id="mobileWatchListButton" class="bottom-nav-button">观看列表</button>
     </div>
 
     <!-- Watch History Modal -->
