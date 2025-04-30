@@ -492,6 +492,10 @@ nav ul li.active {
   display: block;
 }
 
+#headerWatchListBtn{
+  min-width: 130px;
+}
+
 /* Video player modal styles */
 .video-modal-content {
   background: var(--surface);
