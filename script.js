@@ -1230,6 +1230,26 @@ document.addEventListener('DOMContentLoaded', () => {
                     .then(() => {
                         overlay.remove();
                         console.log('Video playback started by user interaction');
+                        
+                        // Request fullscreen mode
+                        try {
+                            // Get the video container for better fullscreen experience
+                            const videoContainer = document.querySelector('.video-player-container');
+                            
+                            // Try the standard fullscreen API and various browser-specific versions
+                            if (videoContainer.requestFullscreen) {
+                                videoContainer.requestFullscreen();
+                            } else if (videoContainer.webkitRequestFullscreen) { // Safari
+                                videoContainer.webkitRequestFullscreen();
+                            } else if (videoContainer.mozRequestFullscreen) { // Firefox
+                                videoContainer.mozRequestFullscreen();
+                            } else if (videoContainer.msRequestFullscreen) { // IE/Edge
+                                videoContainer.msRequestFullscreen();
+                            }
+                            console.log('Requested fullscreen mode');
+                        } catch (e) {
+                            console.warn('Failed to enter fullscreen mode:', e);
+                        }
                     })
                     .catch(err => {
                         console.error('Still failed to play after user interaction:', err);
