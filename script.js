@@ -1313,11 +1313,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Scroll Lock Helper ---
     function updateBodyScrollLock() {
-        const anyOpen = document.querySelector('.modal.open');
-        document.body.style.overflow = anyOpen ? 'hidden' : '';
+        // Remove the scroll locking behavior - always allow scrolling
+        document.body.style.overflow = '';
         
-        // Backup check to make sure we don't permanently lock scrolling if something goes wrong
-        if (!anyOpen && document.body.style.overflow === 'hidden') {
+        // Keep the backup check to make sure scrolling is never locked
+        if (document.body.style.overflow === 'hidden') {
             document.body.style.overflow = '';
         }
     }
