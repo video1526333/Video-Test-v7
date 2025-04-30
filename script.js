@@ -1236,17 +1236,34 @@ document.addEventListener('DOMContentLoaded', () => {
             // Add click handler to start playback
             overlay.addEventListener('click', function() {
                 videoPlayer.muted = false;
+                
+                // Reset the fullscreen prevention flag since this is a direct user interaction
+                window.preventAutoFullscreen = false;
+                
                 videoPlayer.play()
                     .then(() => {
                         overlay.remove();
                         console.log('Video playback started by user interaction');
                         
-                        // Request fullscreen mode with a slight delay to ensure it works across browsers
-                        setTimeout(() => {
-                            // Get the video container for better fullscreen experience
+                        // Request fullscreen immediately from user interaction (this should work reliably)
+                        try {
                             const videoContainer = document.querySelector('.video-player-container');
-                            requestFullscreen(videoContainer);
-                        }, 300); // Short delay to ensure video has started playing
+                            // Direct calls are more likely to work from user gestures
+                            if (videoContainer.requestFullscreen) {
+                                videoContainer.requestFullscreen().catch(e => {
+                                    console.warn('Direct fullscreen request rejected:', e);
+                                });
+                            } else if (videoContainer.webkitRequestFullscreen) {
+                                videoContainer.webkitRequestFullscreen();
+                            } else if (videoContainer.mozRequestFullscreen) {
+                                videoContainer.mozRequestFullscreen();
+                            } else if (videoContainer.msRequestFullscreen) {
+                                videoContainer.msRequestFullscreen();
+                            }
+                            console.log('Requested fullscreen from direct user interaction');
+                        } catch (e) {
+                            console.warn('Failed to enter fullscreen mode from click:', e);
+                        }
                     })
                     .catch(err => {
                         console.error('Still failed to play after user interaction:', err);
@@ -1271,34 +1288,44 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         
         // Add a playing event listener to ensure fullscreen when video starts playing through any means
-        videoPlayer.addEventListener('playing', function() {
-            // Check if we're already in fullscreen
+        videoPlayer.addEventListener('playing', function playingHandler() {
+            // Remove this listener immediately to prevent multiple calls
+            videoPlayer.removeEventListener('playing', playingHandler);
+            
+            // Check if we're already in fullscreen or if auto-fullscreen is prevented
             const isFullScreen = document.fullscreenElement || 
                                 document.webkitFullscreenElement || 
                                 document.mozFullScreenElement || 
                                 document.msFullscreenElement;
             
             if (!isFullScreen && !window.preventAutoFullscreen) {
+                // Wait longer before attempting fullscreen to ensure it's considered a user gesture
                 setTimeout(() => {
-                    // Get the video container for better fullscreen experience
                     const videoContainer = document.querySelector('.video-player-container');
-                    requestFullscreen(videoContainer);
-                }, 500);
+                    // Only request if we're still not in fullscreen
+                    if (!document.fullscreenElement && !window.preventAutoFullscreen) {
+                        requestFullscreen(videoContainer);
+                    }
+                }, 1500); // Longer delay to ensure playback has started and avoid permission issues
             }
-        }, { once: true }); // Only trigger once per video load
+        });
         
-        // Add listener to detect when user uses the native fullscreen button on the video
-        videoPlayer.addEventListener('fullscreenchange', function() {
+        // Add listeners for fullscreen events only once per video load
+        const fullscreenChangeHandler = function() {
             // Mark that user has manually controlled fullscreen
             window.preventAutoFullscreen = true;
-            console.log('User manually toggled fullscreen via player controls');
-        });
+            console.log('User toggled fullscreen via player controls');
+        };
         
-        // Additional listeners for different browser prefixes
-        videoPlayer.addEventListener('webkitfullscreenchange', function() {
-            window.preventAutoFullscreen = true;
-            console.log('User manually toggled fullscreen via player controls (webkit)');
-        });
+        // Remove any existing listeners first to avoid duplicates
+        videoPlayer.removeEventListener('fullscreenchange', fullscreenChangeHandler);
+        videoPlayer.removeEventListener('webkitfullscreenchange', fullscreenChangeHandler);
+        videoPlayer.removeEventListener('mozfullscreenchange', fullscreenChangeHandler);
+        videoPlayer.removeEventListener('MSFullscreenChange', fullscreenChangeHandler);
+        
+        // Add the listeners
+        videoPlayer.addEventListener('fullscreenchange', fullscreenChangeHandler);
+        videoPlayer.addEventListener('webkitfullscreenchange', fullscreenChangeHandler);
         
         // Save playback position on timeupdate (only if >5s and not near end)
         videoPlayer.ontimeupdate = function () {
