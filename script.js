@@ -1017,7 +1017,31 @@ document.addEventListener('DOMContentLoaded', () => {
         const card = event.target.closest('.video-card');
         if (card) {
             const videoId = card.dataset.id;
-            showVideoDetails(videoId);
+            (async () => {
+                try {
+                    const data = await fetchData({ ac: 'detail', ids: videoId });
+                    if (data && data.list && data.list.length > 0) {
+                        const video = data.list[0];
+                        const playSources = video.vod_play_url.split('#');
+                        if (playSources.length > 0) {
+                            const firstSource = playSources[0].split('$');
+                            const url = firstSource[1];
+                            if (url) {
+                                playM3u8Video(url);
+                            } else {
+                                showToast('No playable source available', 'info');
+                            }
+                        } else {
+                            showToast('No playback sources available', 'info');
+                        }
+                    } else {
+                        showToast('Failed to load video details.', 'error');
+                    }
+                } catch (err) {
+                    console.error(err);
+                    showToast('Error loading video.', 'error');
+                }
+            })();
         }
     });
 

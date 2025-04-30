@@ -1,12 +1,12 @@
 /* Minimalist Dark Mode & Tablet-Friendly Layout */
 :root {
-  --bg: #181818;
+  --bg: #ffffff;
   --surface: #23232b;
-  --surface-light: #23232b;
-  --text: #f3f3f3;
-  --text-muted: #bbb;
-  --accent: #ae8cff;
-  --border: #282838;
+  --surface-light: #f3f3f3;
+  --text: #000000;
+  --text-muted: #555555;
+  --accent: #0078d7;
+  --border: #cccccc;
 }
 * {
   box-sizing: border-box;
@@ -60,9 +60,9 @@ header h1 {
   border: 1px solid var(--border);
   background: var(--bg);
   color: var(--text);
-  font-size: 1rem;
+  font-size: 1.2rem;
   border-radius: 6px;
-  width: 180px;
+  width: 300px;
   transition: border 0.15s;
 }
 #searchInput:focus {
@@ -74,12 +74,12 @@ header h1 {
   background: #232323;
 }
 .search-container button {
-  padding: 0.5rem 1.1rem;
+  padding: 0.75rem 1.25rem;
   background: var(--accent);
   color: var(--bg);
   border: none;
   border-radius: 6px;
-  font-size: 1rem;
+  font-size: 1.2rem;
   font-weight: 500;
   cursor: pointer;
   transition: background 0.14s;
@@ -100,6 +100,7 @@ header h1 {
   padding: 0.3rem 0.7rem;
   border-radius: 6px;
   transition: background 0.13s;
+  display: none !important;
 }
 .settings-button:hover {
   background: rgba(174, 140, 255, 0.08);
@@ -121,6 +122,7 @@ header h1 {
   font-weight: bold;
   display: inline-block;
   transition: all 0.2s ease;
+  display: none !important;
 }
 .share-button:hover {
   background: #a370dd;
@@ -159,7 +161,7 @@ header h1 {
 }
 /* Hide category nav by default - will be shown when password is correct */
 #categoryNav {
-  display: none;
+  display: block !important;
 }
 #categoryNav.visible {
   display: block;
@@ -267,7 +269,7 @@ nav ul li.active {
 }
 #videoGrid {
   display: grid;
-  gap: 2rem;
+  gap: 1rem;
   grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
   margin-top: 1.5rem;
 }
@@ -281,6 +283,7 @@ nav ul li.active {
   box-shadow: 0 2px 16px 0 rgba(0, 0, 0, 0.10);
   border: 1.5px solid var(--border);
   transition: box-shadow 0.17s, border 0.17s;
+  padding: 1rem;
 }
 .video-card:hover {
   box-shadow: 0 8px 32px 0 rgba(174, 140, 255, 0.15);
@@ -294,13 +297,13 @@ nav ul li.active {
 }
 .video-card h3 {
   padding: 0.7rem 1rem 0.2rem 1rem;
-  font-size: 1.07rem;
+  font-size: 1.4rem;
   color: var(--text);
   font-weight: 600;
 }
 .video-card p {
   padding: 0 1rem 1rem 1rem;
-  font-size: 0.98rem;
+  font-size: 1rem;
   color: var(--text-muted);
 }
 #pagination {
@@ -355,7 +358,7 @@ nav ul li.active {
 }
 /* Modal base styles */
 .modal {
-  display: none;
+  display: none !important;
   position: fixed;
   top: 0;
   left: 0;
@@ -773,6 +776,7 @@ nav ul li.active {
   margin: 0.5rem 0 1rem;
   cursor: pointer;
   font-weight: bold;
+  display: none !important;
 }
 .watchlist-button:hover {
   background: #a370dd;
@@ -796,6 +800,7 @@ nav ul li.active {
   font-size: 1rem;
   padding: 0.5rem 1rem;
   cursor: pointer;
+  display: none !important;
 }
 .bottom-nav-button:hover {
   color: var(--accent);
@@ -920,4 +925,57 @@ button:active {
   #categoryNav.open {
       left: 0;
  }
+}
+/* Accessibility adjustments for elderly */
+/* Increase base font size for readability */
+html {
+  font-size: 18px !important;
+}
+body {
+  background: #ffffff !important;
+  color: #000000 !important;
+}
+:root {
+  --bg: #ffffff !important;
+  --surface-light: #f3f3f3 !important;
+  --text: #000000 !important;
+  --text-muted: #555555 !important;
+  --accent: #0078d7 !important;
+  --border: #cccccc !important;
+}
+* {
+  font-size: 1.2rem !important;
+}
+input, button {
+  font-size: 1.2rem !important;
+  padding: 0.75rem !important;
+}
+#searchInput {
+  width: 300px !important;
+}
+.settings-button, .share-button, .watchlist-button, #watchHistoryButton, .bottom-nav-button, #settingsModal, #shareModal, #watchHistoryModal {
+  display: none !important;
+}
+#categoryNav {
+  display: block !important;
+}
+.modal {
+  display: none !important;
+}
+#videoPlayerModal.modal.open {
+  display: block !important;
+}
+.video-card {
+  padding: 1rem !important;
+}
+.video-card h3 {
+  font-size: 1.6rem !important;
+}
+.video-card p {
+  font-size: 1.2rem !important;
+}
+#searchButton {
+  font-size: 1.2rem !important;
+  padding: 1rem !important;
+  display: inline-block !important;
 }
